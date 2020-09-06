@@ -1,7 +1,6 @@
 defmodule Resourceful.Collection.List.Sort do
   def call(list, sorters) do
-    list
-    |> Enum.sort(
+    list |> Enum.sort(
       fn (x, y) ->
         sorters
         |> to_sorters()

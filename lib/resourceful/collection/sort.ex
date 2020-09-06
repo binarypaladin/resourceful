@@ -25,11 +25,7 @@ defmodule Resourceful.Collection.Sort do
       - `"name,-age"`
       - `["+name", "-age"]`
   """
-  def call(data_source, sorters) when sorters in [nil, [], ""], do: data_source
-
-  def call(data_source, sorters) do
-    Delegate.sort(data_source).call(data_source, to_sorters(sorters))
-  end
+  def call(data_source, sorters), do: Delegate.sort(data_source, to_sorters(sorters))
 
   def to_sorter("+" <> field), do: to_sorter({field, :asc})
 

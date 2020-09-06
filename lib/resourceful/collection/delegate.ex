@@ -5,5 +5,5 @@ defprotocol Resourceful.Collection.Delegate do
 
   def paginate(data_source, page, per)
 
-  def sort(data_source)
+  def sort(data_source, sorters)
 end

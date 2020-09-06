@@ -17,5 +17,7 @@ defimpl Resourceful.Collection.Delegate, for: List do
 
   def paginate(list, page, per), do: Enum.slice(list, (page - 1) * per, per)
 
-  def sort(_), do: List.Sort
+  def sort(list, sorters) when sorters in [nil, [], ""], do: list
+
+  def sort(list, sorters), do: List.Sort.call(list, sorters)
 end
