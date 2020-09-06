@@ -1,4 +1,4 @@
-defmodule Resourceful.Collection.List.Filter do
+defmodule Resourceful.Collection.List.Filters do
   alias Resourceful.Collection.List.Sort
 
   def equal(list, k, v), do: list |> filter(k, &eq(&1, v))

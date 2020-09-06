@@ -119,7 +119,7 @@ defmodule Resourceful.Collection.Filter do
     {field, operator, val} = to_filter(filter)
 
     data_source
-    |> Delegate.filter()
+    |> Delegate.filters
     |> Kernel.apply(operator, [data_source, field, val])
   end
 

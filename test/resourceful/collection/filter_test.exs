@@ -7,13 +7,13 @@ defmodule Resourceful.Collection.FilterTest do
 
   test "filters a list" do
     assert Fixtures.albums |> Filter.call("title sw R") ==
-           Fixtures.albums |> List.Filter.starts_with(:title, "R")
+           Fixtures.albums |> List.Filters.starts_with(:title, "R")
 
     assert Fixtures.albums |>
            Filter.call(["artist eq Duran Duran", ["release_date gt", ~D[2000-01-01]]]) ==
            Fixtures.albums
-           |> List.Filter.equal(:artist, "Duran Duran")
-           |> List.Filter.greater_than(:release_date, ~D[2000-01-01])
+           |> List.Filters.equal(:artist, "Duran Duran")
+           |> List.Filters.greater_than(:release_date, ~D[2000-01-01])
   end
 
   test "converts client input into filters" do

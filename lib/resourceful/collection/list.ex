@@ -11,7 +11,7 @@ defimpl Resourceful.Collection.Delegate, for: List do
 
   def collection(_), do: List
 
-  def filter(_), do: List.Filter
+  def filters(_), do: List.Filters
 
   def paginate(list, _, -1), do: list
 
