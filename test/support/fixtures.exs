@@ -1,4 +1,7 @@
 defmodule Resourceful.Test.Fixtures do
+  alias Resourceful.Test.Album
+  alias Resourceful.Test.Repo
+
   def albums() do
     [
       %{
@@ -121,6 +124,10 @@ defmodule Resourceful.Test.Fixtures do
         tracks: 11
       }
     ]
+  end
+
+  def seed_database() do
+    albums() |> Enum.map(&(%Album{} |> Album.create_changeset(&1) |> Repo.insert()))
   end
 
   def sorters(), do: [artist: :asc, tracks: :desc, title: :asc]
