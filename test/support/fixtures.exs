@@ -126,6 +126,8 @@ defmodule Resourceful.Test.Fixtures do
     ]
   end
 
+  def albums_query(), do: Album |> Ecto.Queryable.to_query()
+
   def seed_database() do
     albums() |> Enum.map(&(%Album{} |> Album.create_changeset(&1) |> Repo.insert()))
   end
