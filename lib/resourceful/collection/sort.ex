@@ -27,16 +27,16 @@ defmodule Resourceful.Collection.Sort do
   """
   def call(data_source, sorters), do: Delegate.sort(data_source, to_sorters(sorters))
 
-  def to_sorter("+" <> field), do: to_sorter({field, :asc})
+  def to_sorter("+" <> field), do: to_sorter({:asc, field})
 
-  def to_sorter("-" <> field), do: to_sorter({field, :desc})
+  def to_sorter("-" <> field), do: to_sorter({:desc, field})
 
-  def to_sorter(field) when is_binary(field), do: to_sorter({field, :asc})
+  def to_sorter(field) when is_binary(field), do: to_sorter({:asc, field})
 
-  def to_sorter({field, order} = t) when order in ~w[asc desc]a and is_atom(field), do: t
+  def to_sorter({order, field} = t) when order in ~w[asc desc]a and is_atom(field), do: t
 
-  def to_sorter({field, order}) when is_binary(field) do
-    {String.to_existing_atom(field), order} |> to_sorter()
+  def to_sorter({order, field}) when is_binary(field) do
+    {order, String.to_existing_atom(field)} |> to_sorter()
   end
 
   def to_sorters(fields) when is_list(fields), do: Enum.map(fields, &to_sorter/1)

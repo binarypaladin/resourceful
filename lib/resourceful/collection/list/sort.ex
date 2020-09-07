@@ -23,7 +23,7 @@ defmodule Resourceful.Collection.List.Sort do
 
   def to_sorter([head | []]), do: [head]
 
-  def to_sorter([{key, _} | tail]), do: [{key, :eq}] ++ to_sorter(tail)
+  def to_sorter([{_, key} | tail]), do: [{:eq, key}] ++ to_sorter(tail)
 
   def to_sorters(sorters, all \\ [])
 
@@ -35,7 +35,7 @@ defmodule Resourceful.Collection.List.Sort do
     |> to_sorters(all ++ [to_sorter(sorters)])
   end
 
-  defp apply_sorter({key, op}, x, y) do
+  defp apply_sorter({op, key}, x, y) do
     apply(__MODULE__, op, [Map.get(x, key), Map.get(y, key)])
   end
 

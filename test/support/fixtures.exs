@@ -130,5 +130,5 @@ defmodule Resourceful.Test.Fixtures do
     albums() |> Enum.map(&(%Album{} |> Album.create_changeset(&1) |> Repo.insert()))
   end
 
-  def sorters(), do: [artist: :asc, tracks: :desc, title: :asc]
+  def sorters(), do: [asc: :artist, desc: :tracks, asc: :title]
 end
