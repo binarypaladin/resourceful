@@ -7,7 +7,6 @@ defmodule Resourceful.MixProject do
       deps: deps(),
       description: "",
       elixir: "~> 1.10",
-      elixirc_paths: elixirc_paths(Mix.env()),
       name: "Resourceful",
       package: package(),
       start_permanent: Mix.env() == :prod,
@@ -16,10 +15,6 @@ defmodule Resourceful.MixProject do
   end
 
   def application, do: [applications: []]
-
-  defp elixirc_paths(:test), do: ["test/support"] ++ elixirc_paths(:prod)
-
-  defp elixirc_paths(_), do: ["lib"]
 
   defp deps, do: []
 
