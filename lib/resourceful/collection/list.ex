@@ -1,7 +1,7 @@
 defmodule Resourceful.Collection.List do
-  def any?(list, _ \\ []), do: Enum.any?(list)
-
   def all(list, _ \\ []), do: list
+
+  def any?(list, _ \\ []), do: Enum.any?(list)
 
   def total(list, _ \\ []), do: length(list)
 end

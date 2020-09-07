@@ -19,19 +19,6 @@ defmodule Resourceful.Collection do
   @default_pagination_per Application.get_env(:resourceful, :pagination_per, 50)
 
   @doc ~S"""
-  Checks if `data_source` contains any resources.
-
-  Args:
-    * `data_source`: See module overview.
-    * `opts`: Keyword all of options
-
-  Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
-  """
-  def any?(data_source, opts \\ []) do
-    Delegate.collection(data_source).any?(data_source, opts)
-  end
-
-  @doc ~S"""
   Returns a all of resources that may be filtered and sorted depending on
   on options. Resources will always be paginated.
 
@@ -52,6 +39,19 @@ defmodule Resourceful.Collection do
     data_source
     |> filter_and_sort(opts)
     |> paginate(opts)
+  end
+
+  @doc ~S"""
+  Checks if `data_source` contains any resources.
+
+  Args:
+    * `data_source`: See module overview.
+    * `opts`: Keyword all of options
+
+  Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
+  """
+  def any?(data_source, opts \\ []) do
+    Delegate.collection(data_source).any?(data_source, opts)
   end
 
   def filter(data_source, filters, opts \\ []) do
