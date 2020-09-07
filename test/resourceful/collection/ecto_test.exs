@@ -2,6 +2,7 @@ defmodule Resourceful.Collection.EctoTest do
   use ExUnit.Case
 
   alias Resourceful.Collection
+  alias Resourceful.Test.Album
   alias Resourceful.Test.Fixtures
   alias Resourceful.Test.Repo
 
@@ -13,20 +14,18 @@ defmodule Resourceful.Collection.EctoTest do
   end
 
   test "all" do
-    assert Fixtures.albums_query |> Collection.Ecto.all(@opts) ==
-           Fixtures.albums_query |> Repo.all
+    assert Album |> Collection.Ecto.all(@opts) == Album |> Repo.all
   end
 
   test "any?" do
-    assert Fixtures.albums_query |>  Collection.Ecto.any?(@opts) == true
+    assert Album |>  Collection.Ecto.any?(@opts) == true
 
-    Fixtures.albums_query |> Repo.delete_all
+    Album |> Repo.delete_all
 
-    assert Fixtures.albums_query |> Collection.Ecto.any?(@opts) == false
+    assert Album |> Collection.Ecto.any?(@opts) == false
   end
 
   test "total" do
-    assert Fixtures.albums_query |> Collection.Ecto.total(@opts) ==
-           length(Fixtures.albums)
+    assert Album |> Collection.Ecto.total(@opts) == length(Fixtures.albums)
   end
 end
