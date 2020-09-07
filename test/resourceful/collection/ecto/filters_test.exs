@@ -10,7 +10,7 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Fixtures.seed_database
+    Fixtures.seed_database()
   end
 
   test "equals" do
@@ -29,6 +29,7 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
 
   test "greater than" do
     assert Album |> Filters.greater_than(:tracks, 12) |> ids() == [12]
+
     assert Album
            |> Filters.greater_than(:release_date, ~D[2000-01-01])
            |> ids() == [6, 13, 14]
@@ -36,6 +37,7 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
 
   test "greater than or equal" do
     assert Album |> Filters.greater_than_or_equal(:tracks, 12) |> ids() == [6, 12, 14]
+
     assert Album
            |> Filters.greater_than_or_equal(:release_date, ~D[2015-09-11])
            |> ids() == [6, 13]
@@ -58,6 +60,7 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
 
   test "less than or equal" do
     assert Album |> Filters.less_than_or_equal(:tracks, 8) |> ids() == [9, 11, 13]
+
     assert Album
            |> Filters.less_than_or_equal(:release_date, ~D[1976-01-23])
            |> ids() == [1, 11, 15]

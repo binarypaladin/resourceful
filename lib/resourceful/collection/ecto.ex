@@ -1,8 +1,9 @@
 defmodule Resourceful.Collection.Ecto do
   defmodule NoRepoError do
-    defexception message: "No Ecto.Repo has been specified! You must either " <>
-      "pass one explicity using the :ecto_repo option or you can specify a " <>
-      "global default by setting the config option :ecto_repo for :resourceful."
+    defexception message:
+                   "No Ecto.Repo has been specified! You must either " <>
+                     "pass one explicity using the :ecto_repo option or you can specify a " <>
+                     "global default by setting the config option :ecto_repo for :resourceful."
   end
 
   import Ecto.Query, only: [limit: 2], warn: false
@@ -13,7 +14,7 @@ defmodule Resourceful.Collection.Ecto do
 
   def all(queryable, opts), do: repo(opts).all(queryable)
 
-  def any?(queryable, opts), do: queryable |> limit(1) |> all(opts) |> Enum.any?
+  def any?(queryable, opts), do: queryable |> limit(1) |> all(opts) |> Enum.any?()
 
   def total(queryable, opts), do: repo(opts).aggregate(queryable, :count)
 

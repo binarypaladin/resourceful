@@ -14,7 +14,7 @@ defmodule Resourceful.Collection do
   module to support the common interfaces. (For now, that's just Ecto.)
   """
 
-  alias Resourceful.Collection.{Delegate,Filter,Sort}
+  alias Resourceful.Collection.{Delegate, Filter, Sort}
 
   @default_pagination_per Application.get_env(:resourceful, :pagination_per, 50)
 

@@ -6,10 +6,11 @@ Application.put_env(
   :ecto,
   Repo,
   adapter: Ecto.Adapters.Postgres,
-  url: System.get_env(
-    "RESOURCEFUL_TEST_DATABASE_URL",
-    "ecto://postgres@localhost/resourceful_test"
-  ),
+  url:
+    System.get_env(
+      "RESOURCEFUL_TEST_DATABASE_URL",
+      "ecto://postgres@localhost/resourceful_test"
+    ),
   pool: Ecto.Adapters.SQL.Sandbox
 )
 

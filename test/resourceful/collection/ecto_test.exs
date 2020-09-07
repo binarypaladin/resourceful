@@ -10,22 +10,22 @@ defmodule Resourceful.Collection.EctoTest do
 
   setup do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Fixtures.seed_database
+    Fixtures.seed_database()
   end
 
   test "all" do
-    assert Album |> Collection.Ecto.all(@opts) == Album |> Repo.all
+    assert Album |> Collection.Ecto.all(@opts) == Album |> Repo.all()
   end
 
   test "any?" do
-    assert Album |>  Collection.Ecto.any?(@opts) == true
+    assert Album |> Collection.Ecto.any?(@opts) == true
 
-    Album |> Repo.delete_all
+    Album |> Repo.delete_all()
 
     assert Album |> Collection.Ecto.any?(@opts) == false
   end
 
   test "total" do
-    assert Album |> Collection.Ecto.total(@opts) == length(Fixtures.albums)
+    assert Album |> Collection.Ecto.total(@opts) == length(Fixtures.albums())
   end
 end

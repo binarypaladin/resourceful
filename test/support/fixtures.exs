@@ -11,7 +11,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "The Rise and Fall of Ziggy Stardust and the Spiders from Mars",
         tracks: 11
       },
-
       %{
         id: 2,
         title: "Excitable Boy",
@@ -19,7 +18,6 @@ defmodule Resourceful.Test.Fixtures do
         release_date: ~D[1978-01-18],
         tracks: 9
       },
-
       %{
         id: 3,
         artist: "Duran Duran",
@@ -27,7 +25,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Rio",
         tracks: 9
       },
-
       %{
         id: 4,
         artist: "David Bowie",
@@ -35,7 +32,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "\"Heroes\"",
         tracks: 10
       },
-
       %{
         id: 5,
         title: "News of the World",
@@ -43,7 +39,6 @@ defmodule Resourceful.Test.Fixtures do
         release_date: ~D[1977-10-28],
         tracks: 11
       },
-
       %{
         id: 6,
         artist: "Duran Duran",
@@ -51,7 +46,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Paper Gods",
         tracks: 12
       },
-
       %{
         id: 7,
         artist: "David Bowie",
@@ -59,7 +53,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Scary Monsters (and Super Creeps)",
         tracks: 10
       },
-
       %{
         id: 8,
         artist: "Duran Duran",
@@ -67,7 +60,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Duran Duran",
         tracks: 9
       },
-
       %{
         id: 9,
         title: "Low-Life",
@@ -75,7 +67,6 @@ defmodule Resourceful.Test.Fixtures do
         release_date: ~D[1985-05-13],
         tracks: 8
       },
-
       %{
         id: 10,
         artist: "Duran Duran",
@@ -83,7 +74,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Notorious",
         tracks: 10
       },
-
       %{
         id: 11,
         artist: "David Bowie",
@@ -91,7 +81,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Station to Station",
         tracks: 6
       },
-
       %{
         id: 12,
         artist: "Duran Duran",
@@ -99,7 +88,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Duran Duran",
         tracks: 13
       },
-
       %{
         id: 13,
         artist: "David Bowie",
@@ -107,7 +95,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Blackstar",
         tracks: 7
       },
-
       %{
         id: 14,
         artist: "Duran Duran",
@@ -115,7 +102,6 @@ defmodule Resourceful.Test.Fixtures do
         title: "Astronaut",
         tracks: 12
       },
-
       %{
         id: 15,
         artist: "David Bowie",

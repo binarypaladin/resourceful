@@ -24,15 +24,15 @@ defmodule Resourceful.Collection.Filter do
   alias Resourceful.Collection.Delegate
 
   @shorthand %{
-    "eq"  => %{func: :equal},
-    "ex"  => %{func: :exclude, only: [:binary, :list]},
-    "gt"  => %{func: :greater_than},
+    "eq" => %{func: :equal},
+    "ex" => %{func: :exclude, only: [:binary, :list]},
+    "gt" => %{func: :greater_than},
     "gte" => %{func: :greater_than_or_equal},
-    "in"  => %{func: :include, only: [:binary, :list]},
-    "lt"  => %{func: :less_than},
+    "in" => %{func: :include, only: [:binary, :list]},
+    "lt" => %{func: :less_than},
     "lte" => %{func: :less_than_or_equal},
     "not" => %{func: :not_equal},
-    "sw"  => %{func: :starts_with, only: [:binary]}
+    "sw" => %{func: :starts_with, only: [:binary]}
   }
 
   @doc ~S"""
@@ -50,7 +50,7 @@ defmodule Resourceful.Collection.Filter do
   def call(data_source, []), do: data_source
 
   def call(data_source, filters) when is_list(filters) do
-    filters |> Enum.reduce(data_source, &(apply_filter(&2, &1)))
+    filters |> Enum.reduce(data_source, &apply_filter(&2, &1))
   end
 
   def call(data_source, filters), do: call(data_source, [filters])
@@ -119,7 +119,7 @@ defmodule Resourceful.Collection.Filter do
     {field, operator, val} = to_filter(filter)
 
     data_source
-    |> Delegate.filters
+    |> Delegate.filters()
     |> Kernel.apply(operator, [data_source, field, val])
   end
 

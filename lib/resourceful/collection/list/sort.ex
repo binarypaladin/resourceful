@@ -1,12 +1,11 @@
 defmodule Resourceful.Collection.List.Sort do
   def call(list, sorters) do
-    list |> Enum.sort(
-      fn (x, y) ->
-        sorters
-        |> to_sorters()
-        |> Enum.any?(&sort_with_sorters(&1, x, y))
-      end
-    )
+    list
+    |> Enum.sort(fn x, y ->
+      sorters
+      |> to_sorters()
+      |> Enum.any?(&sort_with_sorters(&1, x, y))
+    end)
   end
 
   def asc(%module{} = x, %module{} = y), do: module.compare(x, y) == :lt

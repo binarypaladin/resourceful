@@ -3,10 +3,10 @@ defmodule Resourceful.Test.Album do
   import Ecto.Changeset
 
   schema "albums" do
-    field :artist, :string
-    field :release_date, :date
-    field :title, :string
-    field :tracks, :integer
+    field(:artist, :string)
+    field(:release_date, :date)
+    field(:title, :string)
+    field(:tracks, :integer)
   end
 
   def create_changeset(album, attrs) do
