@@ -3,7 +3,7 @@ defmodule Resourceful.Test.Helpers do
 
   def all_by(%Ecto.Query{} = queryable, key), do: queryable |> Repo.all() |> all_by(key)
 
-  def all_by(list, key), do: list |> Enum.map(fn(map) -> map |> Map.get(key) end)
+  def all_by(list, key), do: list |> Enum.map(&(&1 |> Map.get(key)))
 
   def at(list, index), do: list |> Enum.at(index)
 
