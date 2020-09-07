@@ -13,12 +13,7 @@ defmodule Resourceful.Collection.Ecto do
 
   def all(queryable, opts), do: repo(opts).all(queryable)
 
-  def any?(queryable, opts) do
-    queryable
-    |> limit(1)
-    |> all(opts)
-    |> Enum.any?
-  end
+  def any?(queryable, opts), do: queryable |> limit(1) |> all(opts) |> Enum.any?
 
   def total(queryable, opts), do: repo(opts).aggregate(queryable, :count)
 
