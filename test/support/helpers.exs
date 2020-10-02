@@ -11,7 +11,11 @@ defmodule Resourceful.Test.Helpers do
 
   def first(list, key) when is_atom(key), do: first(list) |> Map.get(key)
 
-  def ids(data_source), do: data_source |> all_by(:id)
+  def id(map), do: map |> Map.fetch!("id")
+
+  def ids(%Ecto.Query{} = queryable), do: queryable |> all_by(:id)
+
+  def ids(list), do: list |> all_by("id")
 
   def last(list) when is_list(list), do: list |> List.last()
 

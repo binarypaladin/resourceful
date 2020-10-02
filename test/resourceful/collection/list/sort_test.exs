@@ -7,30 +7,30 @@ defmodule Resourceful.Collection.List.SortTest do
   import Resourceful.Test.Helpers
 
   test "sorts a list of maps" do
-    sorted = Sort.call(Fixtures.albums(), asc: :title)
-    assert first(sorted).id == 4
-    assert last(sorted).id == 1
+    sorted = Sort.call(Fixtures.albums(), asc: "title")
+    assert first(sorted) |> id() == 4
+    assert last(sorted) |> id() == 1
 
-    sorted = Sort.call(Fixtures.albums(), desc: :release_date)
-    assert first(sorted).id == 13
-    assert last(sorted).id == 15
+    sorted = Sort.call(Fixtures.albums(), desc: "release_date")
+    assert first(sorted) |> id() == 13
+    assert last(sorted) |> id() == 15
 
-    sorted = Sort.call(Fixtures.albums(), desc: :artist, desc: :tracks, asc: :release_date)
-    assert first(sorted).id == 2
-    assert last(sorted).id == 11
-    assert at(sorted, 10).id == 1
+    sorted = Sort.call(Fixtures.albums(), desc: "artist", desc: "tracks", asc: "release_date")
+    assert first(sorted) |> id() == 2
+    assert last(sorted) |> id() == 11
+    assert at(sorted, 10) |> id() == 1
   end
 
   test "converts base sorter to an expanded line of sorters" do
-    assert Sort.to_sorter(Fixtures.sorters()) == [eq: :artist, eq: :tracks, asc: :title]
+    assert Sort.to_sorter(Fixtures.sorters()) == [eq: "artist", eq: "tracks", asc: "title"]
   end
 
   test "converts base sorters to list sorters" do
     assert Sort.to_sorters(Fixtures.sorters()) ==
              [
-               [asc: :artist],
-               [eq: :artist, desc: :tracks],
-               [eq: :artist, eq: :tracks, asc: :title]
+               [asc: "artist"],
+               [eq: "artist", desc: "tracks"],
+               [eq: "artist", eq: "tracks", asc: "title"]
              ]
   end
 

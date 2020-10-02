@@ -78,17 +78,14 @@ defmodule Resourceful.Collection.Filter do
 
     to_filter("age gta 18")
   """
-  def to_filter({field, op, _} = filter) when is_atom(field) and is_binary(op), do: filter
+  def to_filter({field, op, val}) when is_binary(op),
+    do: {field, operator_func!(op), val}
 
-  def to_filter({field, op, val}), do: {field(field), operator_func!(op), val}
+  def to_filter(filter) when is_list(filter) and length(filter) == 3,
+    do: List.to_tuple(filter) |> to_filter()
 
-  def to_filter(filter) when is_list(filter) and length(filter) == 3 do
-    List.to_tuple(filter) |> to_filter()
-  end
-
-  def to_filter([field_and_op, val]) do
-    (String.split(field_and_op, " ", parts: 2) ++ [val]) |> to_filter()
-  end
+  def to_filter([field_and_op, val]),
+    do: (String.split(field_and_op, " ", parts: 2) ++ [val]) |> to_filter()
 
   def to_filter(filter) when is_binary(filter) do
     filter |> String.split(" ", parts: 3) |> to_filter()
@@ -123,10 +120,6 @@ defmodule Resourceful.Collection.Filter do
     |> Kernel.apply(operator, [data_source, field, val])
   end
 
-  defp field(f) when is_atom(f), do: f
-
-  defp field(f) when is_binary(f), do: String.to_existing_atom(f)
-
   defp operator(op) when is_binary(op), do: Map.get(@shorthand, op)
 
   defp operator(op) when is_atom(op), do: operator(Atom.to_string(op))
@@ -137,13 +130,11 @@ defmodule Resourceful.Collection.Filter do
 
   defp valid_operator_with_type?(nil, _), do: false
 
-  defp valid_operator_with_type?(%{only: only}, val) when is_binary(val) do
-    Enum.member?(only, :binary)
-  end
+  defp valid_operator_with_type?(%{only: only}, val) when is_binary(val),
+    do: Enum.member?(only, :binary)
 
-  defp valid_operator_with_type?(%{only: only}, val) when is_list(val) do
-    Enum.member?(only, :list)
-  end
+  defp valid_operator_with_type?(%{only: only}, val) when is_list(val),
+    do: Enum.member?(only, :list)
 
   defp valid_operator_with_type?(%{only: _}, _), do: false
 

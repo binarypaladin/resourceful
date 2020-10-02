@@ -31,13 +31,9 @@ defmodule Resourceful.Collection.Sort do
 
   def to_sorter("-" <> field), do: to_sorter({:desc, field})
 
-  def to_sorter(field) when is_binary(field), do: to_sorter({:asc, field})
+  def to_sorter({order, _} = t) when order in [:asc, :desc], do: t
 
-  def to_sorter({order, field} = t) when order in ~w[asc desc]a and is_atom(field), do: t
-
-  def to_sorter({order, field}) when is_binary(field) do
-    {order, String.to_existing_atom(field)} |> to_sorter()
-  end
+  def to_sorter(field), do: to_sorter({:asc, field})
 
   def to_sorters(fields) when is_list(fields), do: Enum.map(fields, &to_sorter/1)
 

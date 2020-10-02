@@ -7,21 +7,21 @@ defmodule Resourceful.Collection.FilterTest do
 
   test "filters a list" do
     assert Fixtures.albums() |> Filter.call("title sw R") ==
-             Fixtures.albums() |> List.Filters.starts_with(:title, "R")
+             Fixtures.albums() |> List.Filters.starts_with("title", "R")
 
     assert Fixtures.albums()
            |> Filter.call(["artist eq Duran Duran", ["release_date gt", ~D[2000-01-01]]]) ==
              Fixtures.albums()
-             |> List.Filters.equal(:artist, "Duran Duran")
-             |> List.Filters.greater_than(:release_date, ~D[2000-01-01])
+             |> List.Filters.equal("artist", "Duran Duran")
+             |> List.Filters.greater_than("release_date", ~D[2000-01-01])
   end
 
   test "converts client input into filters" do
     assert Filter.to_filter("title eq News of the World") ==
-             {:title, :equal, "News of the World"}
+             {"title", :equal, "News of the World"}
 
     assert Filter.to_filter(["release_date gte", ~D[2000-01-01]]) ==
-             {:release_date, :greater_than_or_equal, ~D[2000-01-01]}
+             {"release_date", :greater_than_or_equal, ~D[2000-01-01]}
   end
 
   test "validates operator" do
