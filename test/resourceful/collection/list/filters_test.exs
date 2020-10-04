@@ -29,7 +29,9 @@ defmodule Resourceful.Collection.List.FiltersTest do
   end
 
   test "greater than or equal" do
-    assert Fixtures.albums() |> Filters.greater_than_or_equal("tracks", 12) |> ids() == [6, 12, 14]
+    assert Fixtures.albums()
+           |> Filters.greater_than_or_equal("tracks", 12)
+           |> ids() == [6, 12, 14]
 
     assert Fixtures.albums()
            |> Filters.greater_than_or_equal("release_date", ~D[2015-09-11])

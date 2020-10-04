@@ -15,39 +15,34 @@ defmodule Resourceful.CollectionTest do
   @opts [ecto_repo: Repo]
 
   test "filters, sorts, and paginates a list" do
-    opts = [
-      filter: {"artist", "eq", "Duran Duran"},
-      page: 2,
-      per: 2,
-      sort: [desc: "release_date"]
-    ]
+    opts =
+      @opts ++
+        [
+          filter: "artist eq Duran Duran",
+          page: 2,
+          per: 2,
+          sort: "-release_date"
+        ]
 
     ids = [12, 10]
 
     assert Fixtures.albums() |> Collection.all(opts) |> ids() == ids
-
-    opts = @opts ++ [
-      filter: {:artist, "eq", "Duran Duran"},
-      page: 2,
-      per: 2,
-      sort: [desc: :release_date]
-    ]
-
     assert Fixtures.albums_query() |> Collection.all(opts) |> all_by(:id) == ids
   end
 
   test "filters a list" do
+    filter = "title eq Rio"
     ids = [3]
 
     assert ids ==
-      Fixtures.albums()
-      |> Collection.filter({"title", "eq", "Rio"})
-      |> ids()
+             Fixtures.albums()
+             |> Collection.filter(filter)
+             |> ids()
 
     assert ids ==
-      Fixtures.albums_query()
-      |> Collection.filter({:title, "eq", "Rio"}, @opts)
-      |> all_by(:id)
+             Fixtures.albums_query()
+             |> Collection.filter(filter, @opts)
+             |> all_by(:id)
   end
 
   test "paginates a list" do
@@ -58,17 +53,18 @@ defmodule Resourceful.CollectionTest do
   end
 
   test "sorts a list" do
+    sorter = "artist, -release_date"
     ids = [13, 7, 4, 11, 1, 15, 6, 14, 12, 10, 3, 8, 9, 5, 2]
 
     assert ids ==
-      Fixtures.albums()
-      |> Collection.sort(asc: "artist", desc: "release_date")
-      |> ids()
+             Fixtures.albums()
+             |> Collection.sort(sorter)
+             |> ids()
 
     assert ids ==
-      Fixtures.albums_query()
-      |> Collection.sort([asc: :artist, desc: :release_date], @opts)
-      |> all_by(:id)
+             Fixtures.albums_query()
+             |> Collection.sort(sorter, @opts)
+             |> all_by(:id)
   end
 
   test "gets total" do

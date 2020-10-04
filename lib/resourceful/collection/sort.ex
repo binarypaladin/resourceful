@@ -25,17 +25,31 @@ defmodule Resourceful.Collection.Sort do
       - `"name,-age"`
       - `["+name", "-age"]`
   """
-  def call(data_source, sorters), do: Delegate.sort(data_source, to_sorters(sorters))
+  def call(data_source, sorters), do: Delegate.sort(data_source, all(sorters))
 
-  def to_sorter("+" <> field), do: to_sorter({:asc, field})
+  def all(fields) when is_list(fields), do: Enum.map(fields, &cast!/1)
 
-  def to_sorter("-" <> field), do: to_sorter({:desc, field})
+  def all(field) when is_binary(field), do: field |> String.split(~r/, */) |> all()
 
-  def to_sorter({order, _} = t) when order in [:asc, :desc], do: t
+  def all(field), do: all([field])
 
-  def to_sorter(field), do: to_sorter({:asc, field})
+  def cast("+" <> field), do: cast({:asc, field})
 
-  def to_sorters(fields) when is_list(fields), do: Enum.map(fields, &to_sorter/1)
+  def cast("-" <> field), do: cast({:desc, field})
 
-  def to_sorters(field), do: to_sorters([field])
+  def cast({order, _} = sorter) when order in [:asc, :desc], do: {:ok, sorter}
+
+  def cast(input) when is_binary(input) or is_atom(input), do: cast({:asc, input})
+
+  def cast(input), do: {:error, :invalid_sorter_input, %{input: input}}
+
+  def cast!(input) do
+    case cast(input) do
+      {:ok, sorter} ->
+        sorter
+
+      {:error, _, %{input: input}} ->
+        raise ArgumentError, message: "Cannot cast sorter: #{Kernel.inspect(input)}"
+    end
+  end
 end

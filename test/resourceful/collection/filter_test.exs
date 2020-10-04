@@ -17,11 +17,13 @@ defmodule Resourceful.Collection.FilterTest do
   end
 
   test "converts client input into filters" do
-    assert Filter.to_filter("title eq News of the World") ==
-             {"title", :equal, "News of the World"}
+    assert Filter.cast("title eq News of the World") ==
+             {:ok, {"title", "eq", "News of the World"}}
 
-    assert Filter.to_filter(["release_date gte", ~D[2000-01-01]]) ==
-             {"release_date", :greater_than_or_equal, ~D[2000-01-01]}
+    assert Filter.cast(["release_date gte", ~D[2000-01-01]]) ==
+             {:ok, {"release_date", "gte", ~D[2000-01-01]}}
+
+    assert Filter.cast!("title Rio") == {"title", "eq", "Rio"}
   end
 
   test "validates operator" do

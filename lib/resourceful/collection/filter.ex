@@ -25,14 +25,14 @@ defmodule Resourceful.Collection.Filter do
 
   @shorthand %{
     "eq" => %{func: :equal},
-    "ex" => %{func: :exclude, only: [:binary, :list]},
+    "ex" => %{func: :exclude, only: [:string, :list]},
     "gt" => %{func: :greater_than},
     "gte" => %{func: :greater_than_or_equal},
-    "in" => %{func: :include, only: [:binary, :list]},
+    "in" => %{func: :include, only: [:string, :list]},
     "lt" => %{func: :less_than},
     "lte" => %{func: :less_than_or_equal},
     "not" => %{func: :not_equal},
-    "sw" => %{func: :starts_with, only: [:binary]}
+    "sw" => %{func: :starts_with, only: [:string]}
   }
 
   @doc ~S"""
@@ -44,25 +44,24 @@ defmodule Resourceful.Collection.Filter do
 
   ## Args
     * `data_source`: See `Resourceful.Collection` module overview.
-    * `filters`: A list of filters. See `to_filter/1` for a list of valid
+    * `filters`: A list of filters. See `cast/1` for a list of valid
       filters.
   """
   def call(data_source, []), do: data_source
 
-  def call(data_source, filters) when is_list(filters) do
-    filters |> Enum.reduce(data_source, &apply_filter(&2, &1))
-  end
+  def call(data_source, filters) when is_list(filters),
+    do: filters |> Enum.reduce(data_source, &apply_filter!(&2, &1))
 
   def call(data_source, filters), do: call(data_source, [filters])
 
   @doc ~S"""
-  Converts an argument into an appropriate filter parameter. A to_filterd filter
+  Converts an argument into an appropriate filter parameter. A castd filter
   is a tuple of containing an atom for the field name, an atom of the function
   name that will be called by the deligated module, and the value that will
   be used for comparison.
 
   Filter parameters can be provded as a tuple, list, or string and will be
-  to_filterd to the appropriate format. Invalid operators and their respective
+  castd to the appropriate format. Invalid operators and their respective
   values will result in an exception. Please see `valid_operator?/2` if you want
   to ensure client provided data is valid first.
 
@@ -70,25 +69,37 @@ defmodule Resourceful.Collection.Filter do
   default?)
 
   ## Examples
-    to_filter({:age, "gte", 18})
+    cast({:age, "gte", 18})
 
-    to_filter(["age", "gte", 18])
+    cast(["age", "gte", 18])
 
-    to_filter(["age gte", 18])
+    cast(["age gte", 18])
 
-    to_filter("age gta 18")
+    cast("age gta 18")
   """
-  def to_filter({field, op, val}) when is_binary(op),
-    do: {field, operator_func!(op), val}
+  def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
-  def to_filter(filter) when is_list(filter) and length(filter) == 3,
-    do: List.to_tuple(filter) |> to_filter()
+  def cast([field_and_op, val]) when is_binary(field_and_op), do: cast(field_and_op, val)
 
-  def to_filter([field_and_op, val]),
-    do: (String.split(field_and_op, " ", parts: 2) ++ [val]) |> to_filter()
+  def cast(input) when is_list(input) and length(input) == 3,
+    do: List.to_tuple(input) |> cast()
 
-  def to_filter(filter) when is_binary(filter) do
-    filter |> String.split(" ", parts: 3) |> to_filter()
+  def cast(input) when is_binary(input),
+    do: input |> String.split(" ", parts: 3) |> cast()
+
+  def cast(input), do: {:error, :invalid_filter_input, %{input: input}}
+
+  def cast(field_and_op, val),
+    do: cast(cast_field_and_op(field_and_op) ++ [val])
+
+  def cast!(input) do
+    case cast(input) do
+      {:ok, filter} ->
+        filter
+
+      {:error, _, %{input: input}} ->
+        raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(input)}"
+    end
   end
 
   @doc ~S"""
@@ -112,13 +123,20 @@ defmodule Resourceful.Collection.Filter do
   """
   def valid_operator?(op, val), do: valid_operator_with_type?(operator(op), val)
 
-  defp apply_filter(data_source, filter) do
-    {field, operator, val} = to_filter(filter)
+  defp apply_filter!(data_source, filter) do
+    {field, op, val} = cast!(filter)
 
     data_source
     |> Delegate.filters()
-    |> Kernel.apply(operator, [data_source, field, val])
+    |> Kernel.apply(operator_func!(op), [data_source, field, val])
   end
+
+  defp cast_field_and_op(field_and_op) when is_binary(field_and_op),
+    do: String.split(field_and_op, " ", parts: 2) |> cast_field_and_op()
+
+  defp cast_field_and_op([field | []]), do: [field, "eq"]
+
+  defp cast_field_and_op(field_and_op), do: field_and_op
 
   defp operator(op) when is_binary(op), do: Map.get(@shorthand, op)
 
@@ -126,12 +144,10 @@ defmodule Resourceful.Collection.Filter do
 
   defp operator_func!(op) when is_binary(op), do: Map.fetch!(@shorthand, op).func
 
-  defp operator_func!(op) when is_atom(op), do: operator_func!(Atom.to_string(op))
-
   defp valid_operator_with_type?(nil, _), do: false
 
   defp valid_operator_with_type?(%{only: only}, val) when is_binary(val),
-    do: Enum.member?(only, :binary)
+    do: Enum.member?(only, :string)
 
   defp valid_operator_with_type?(%{only: only}, val) when is_list(val),
     do: Enum.member?(only, :list)

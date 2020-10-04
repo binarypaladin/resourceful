@@ -10,13 +10,15 @@ defmodule Resourceful.Collection.SortTest do
   end
 
   test "converts key input into keyword lists" do
-    assert Sort.to_sorter("+artist") == {:asc, "artist"}
-    assert Sort.to_sorter("-artist") == {:desc, "artist"}
-    assert Sort.to_sorter("artist") == {:asc, "artist"}
+    assert Sort.cast("+artist") == {:ok, {:asc, "artist"}}
+    assert Sort.cast("-artist") == {:ok, {:desc, "artist"}}
+    assert Sort.cast("artist") == {:ok, {:asc, "artist"}}
 
-    assert Sort.to_sorters("artist") == [{:asc, "artist"}]
+    assert Sort.cast!("artist") == {:asc, "artist"}
 
-    assert Sort.to_sorters(["-tracks", "+artist", "title"]) ==
+    assert Sort.all("artist,-release_date") == [asc: "artist", desc: "release_date"]
+
+    assert Sort.all(["-tracks", "+artist", "title"]) ==
              [{:desc, "tracks"}, {:asc, "artist"}, {:asc, "title"}]
   end
 end
