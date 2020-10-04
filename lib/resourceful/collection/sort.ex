@@ -25,7 +25,14 @@ defmodule Resourceful.Collection.Sort do
       - `"name,-age"`
       - `["+name", "-age"]`
   """
-  def call(data_source, sorters), do: Delegate.sort(data_source, all(sorters))
+  def call(data_source, sorters) do
+    sorters =
+      sorters
+      |> all()
+      |> Enum.map(&Delegate.cast_sorter(data_source, &1))
+
+    Delegate.sort(data_source, sorters)
+  end
 
   def all(fields) when is_list(fields), do: Enum.map(fields, &cast!/1)
 

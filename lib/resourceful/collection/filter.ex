@@ -124,7 +124,7 @@ defmodule Resourceful.Collection.Filter do
   def valid_operator?(op, val), do: valid_operator_with_type?(operator(op), val)
 
   defp apply_filter!(data_source, filter) do
-    {field, op, val} = cast!(filter)
+    {field, op, val} = Delegate.cast_filter(data_source, cast!(filter))
 
     data_source
     |> Delegate.filters()

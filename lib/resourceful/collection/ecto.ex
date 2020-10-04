@@ -24,6 +24,11 @@ end
 defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
   import Ecto.Query, warn: false
 
+  def cast_filter(_, {field, op, val}),
+    do: {String.to_existing_atom(field), op, val}
+
+  def cast_sorter(_, {order, field}), do: {order, String.to_existing_atom(field)}
+
   def collection(_), do: Resourceful.Collection.Ecto
 
   def filters(_), do: Resourceful.Collection.Ecto.Filters
@@ -40,11 +45,18 @@ end
 defimpl Resourceful.Collection.Delegate, for: Atom do
   alias Resourceful.Collection.Delegate
 
+  def cast_filter(module, filter),
+    do: module |> to_query() |> Delegate.cast_filter(filter)
+
+  def cast_sorter(module, sorter),
+    do: module |> to_query() |> Delegate.cast_sorter(sorter)
+
   def collection(module), do: module |> to_query() |> Delegate.collection()
 
   def filters(module), do: module |> to_query() |> Delegate.filters()
 
-  def paginate(module, page, per), do: module |> to_query() |> Delegate.paginate(page, per)
+  def paginate(module, page, per),
+    do: module |> to_query() |> Delegate.paginate(page, per)
 
   def sort(module, sorters), do: module |> to_query() |> Delegate.sort(sorters)
 

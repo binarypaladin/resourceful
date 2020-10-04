@@ -9,6 +9,10 @@ end
 defimpl Resourceful.Collection.Delegate, for: List do
   alias Resourceful.Collection.List
 
+  def cast_filter(_, filter), do: filter
+
+  def cast_sorter(_, sorter), do: sorter
+
   def collection(_), do: List
 
   def filters(_), do: List.Filters
