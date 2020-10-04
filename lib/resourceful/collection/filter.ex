@@ -79,7 +79,10 @@ defmodule Resourceful.Collection.Filter do
   """
   def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
-  def cast([field_and_op, val]) when is_binary(field_and_op), do: cast(field_and_op, val)
+  def cast({field_and_op, val}) when is_binary(field_and_op),
+    do: cast(cast_field_and_op(field_and_op) ++ [val])
+
+  def cast([field_and_op, val]), do: cast({field_and_op, val})
 
   def cast(input) when is_list(input) and length(input) == 3,
     do: List.to_tuple(input) |> cast()
@@ -87,17 +90,14 @@ defmodule Resourceful.Collection.Filter do
   def cast(input) when is_binary(input),
     do: input |> String.split(" ", parts: 3) |> cast()
 
-  def cast(input), do: {:error, :invalid_filter_input, %{input: input}}
-
-  def cast(field_and_op, val),
-    do: cast(cast_field_and_op(field_and_op) ++ [val])
+  def cast(input), do: {:error, {:invalid_filter_input, %{input: input}}}
 
   def cast!(input) do
     case cast(input) do
       {:ok, filter} ->
         filter
 
-      {:error, _, %{input: input}} ->
+      {:error, {_, %{input: input}}} ->
         raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(input)}"
     end
   end

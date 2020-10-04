@@ -36,7 +36,7 @@ defmodule Resourceful.Collection.Sort do
 
   def all(fields) when is_list(fields), do: Enum.map(fields, &cast!/1)
 
-  def all(field) when is_binary(field), do: field |> String.split(~r/, */) |> all()
+  def all(string) when is_binary(string), do: string |> string_list() |> all()
 
   def all(field), do: all([field])
 
@@ -48,15 +48,17 @@ defmodule Resourceful.Collection.Sort do
 
   def cast(input) when is_binary(input) or is_atom(input), do: cast({:asc, input})
 
-  def cast(input), do: {:error, :invalid_sorter_input, %{input: input}}
+  def cast(input), do: {:error, {:invalid_sorter_input, %{input: input}}}
 
   def cast!(input) do
     case cast(input) do
       {:ok, sorter} ->
         sorter
 
-      {:error, _, %{input: input}} ->
+      {:error, {_, %{input: input}}} ->
         raise ArgumentError, message: "Cannot cast sorter: #{Kernel.inspect(input)}"
     end
   end
+
+  def string_list(string) when is_binary(string), do: string |> String.split(~r/, */)
 end
