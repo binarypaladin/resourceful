@@ -61,8 +61,8 @@ defmodule Resourceful.ErrorTest do
   test "delete_context_key/2" do
     error = {:error, {:invalid, %{input: "x"}}}
 
-    assert Error.delete_context_key(error, :source) == error
-    assert Error.delete_context_key(error, :input) == {:error, {:invalid, %{}}}
+    assert error |> Error.delete_context_key(:source) == error
+    assert error |> Error.delete_context_key(:input) == {:error, {:invalid, %{}}}
   end
 
   test "ok_value/1" do
@@ -95,26 +95,27 @@ defmodule Resourceful.ErrorTest do
   end
 
   test "with_context/1" do
-    assert Error.with_context({:error, :type}) == {:error, {:type, %{}}}
     assert :type |> Error.with_context() == {:error, {:type, %{}}}
 
-    assert Error.with_context({:error, {:type, %{input: "abc"}}}) ==
+    assert {:error, :type} |> Error.with_context() == {:error, {:type, %{}}}
+
+    assert {:error, {:type, %{input: "abc"}}} |> Error.with_context() ==
              {:error, {:type, %{input: "abc"}}}
   end
 
   test "with_context/2" do
-    assert Error.with_context({:error, :type}, %{key: "value"}) ==
+    assert {:error, :type} |> Error.with_context(%{key: "value"}) ==
              {:error, {:type, %{key: "value"}}}
 
-    assert Error.with_context({:error, {:type, %{k1: "v1"}}}, %{k2: "v2"}) ==
+    assert {:error, {:type, %{k1: "v1"}}} |> Error.with_context(%{k2: "v2"}) ==
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
   test "with_context/3" do
-    assert Error.with_context({:error, :type}, :key, "value") ==
+    assert {:error, :type} |> Error.with_context(:key, "value") ==
              {:error, {:type, %{key: "value"}}}
 
-    assert Error.with_context({:error, {:type, %{k1: "v1"}}}, :k2, "v2") ==
+    assert {:error, {:type, %{k1: "v1"}}} |> Error.with_context(:k2, "v2") ==
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
