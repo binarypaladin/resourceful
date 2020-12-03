@@ -83,6 +83,9 @@ defmodule Resourceful.ErrorTest do
   end
 
   test "prepend_source/2" do
+    assert :type |> Error.prepend_source([:key]) ==
+             {:error, {:type, %{source: [:key]}}}
+
     assert {:error, :type} |> Error.prepend_source([:key]) ==
              {:error, {:type, %{source: [:key]}}}
 
@@ -93,6 +96,7 @@ defmodule Resourceful.ErrorTest do
 
   test "with_context/1" do
     assert Error.with_context({:error, :type}) == {:error, {:type, %{}}}
+    assert :type |> Error.with_context() == {:error, {:type, %{}}}
 
     assert Error.with_context({:error, {:type, %{input: "abc"}}}) ==
              {:error, {:type, %{input: "abc"}}}
@@ -115,6 +119,8 @@ defmodule Resourceful.ErrorTest do
   end
 
   test "with_source/2" do
+    assert :type |> Error.with_source(:key) == {:error, {:type, %{source: [:key]}}}
+
     assert {:error, :type} |> Error.with_source(:key) ==
              {:error, {:type, %{source: [:key]}}}
 

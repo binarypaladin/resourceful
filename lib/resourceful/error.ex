@@ -186,35 +186,39 @@ defmodule Resourceful.Error do
   def prepend_source({:error, {error, %{} = context}}, prefix),
     do: {:error, {error, context |> Map.put(:source, List.wrap(prefix))}}
 
-  def prepend_source({:error, _} = error, prefix),
-    do: error |> with_context() |> prepend_source(prefix)
+  def prepend_source(error_or_type, prefix),
+    do: error_or_type |> with_context() |> prepend_source(prefix)
 
   @doc """
   Adds a context map to an error if it lacks one, converting a basic error to a
-  contextual error.
+  contextual error. It may also take a single atom to prevent error generating
+  code from having to constantly wrap errors in an `:error` tuple.
 
   Returns a contextual error tuple.
   """
   def with_context({:error, {type, %{}}} = error) when is_atom(type), do: error
 
-  def with_context({:error, type}) when is_atom(type), do: {:error, {type, %{}}}
+  def with_context({:error, type}) when is_atom(type), do: contextual_error(type)
 
-  def with_context(error, %{} = context),
-    do: error |> with_context() |> merge_context(context)
+  def with_context(type) when is_atom(type), do: contextual_error(type)
 
-  def with_context(error, key, value),
-    do: error |> with_context() |> with_context_value(key, value)
+  def with_context(error_or_type, %{} = context),
+    do: error_or_type |> with_context() |> merge_context(context)
+
+  def with_context(error_or_type, key, value),
+    do: error_or_type |> with_context() |> with_context_value(key, value)
 
   @doc """
-  Adds source context to an error and replaces `:source` if present. Leaves
-  non-error values as is.
+  Adds source context to an error and replaces `:source` if present.
 
   Returns a contextual error tuple.
   """
-  def with_source({:error, _} = error, source),
-    do: error |> delete_context_key(:source) |> prepend_source(source)
-
-  def with_source(ok, _), do: ok
+  def with_source(error_or_type, source) do
+    error_or_type
+    |> with_context()
+    |> delete_context_key(:source)
+    |> prepend_source(source)
+  end
 
   defp all_value(%{} = map) do
     map
@@ -230,6 +234,8 @@ defmodule Resourceful.Error do
   end
 
   defp all_value({:error, _} = error), do: error
+
+  defp contextual_error(type), do: {:error, {type, %{}}}
 
   defp error_value({:error, value}), do: value
 
