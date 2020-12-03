@@ -119,8 +119,9 @@ defmodule Resourceful.ErrorTest do
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
-  test "with_source/2" do
-    assert :type |> Error.with_source(:key) == {:error, {:type, %{source: [:key]}}}
+  test "with_source/3" do
+    assert :type |> Error.with_source(:key, %{input: "x"}) ==
+      {:error, {:type, %{input: "x", source: [:key]}}}
 
     assert {:error, :type} |> Error.with_source(:key) ==
              {:error, {:type, %{source: [:key]}}}

@@ -213,9 +213,9 @@ defmodule Resourceful.Error do
 
   Returns a contextual error tuple.
   """
-  def with_source(error_or_type, source) do
+  def with_source(error_or_type, source, %{} = context \\ %{}) do
     error_or_type
-    |> with_context()
+    |> with_context(context)
     |> delete_context_key(:source)
     |> prepend_source(source)
   end
