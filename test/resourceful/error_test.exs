@@ -15,10 +15,10 @@ defmodule Resourceful.ErrorTest do
       k2_3: [3, 4, {:error, {:err_4, %{input: "y"}}}]
     },
     k3: [
-      %{k3_0_1: {:ok, "f"}, k3_0_2: {:error, {:err_4, %{input: 2}}}},
-      %{k3_1_1: {:error, {:err_5, %{input: 3}}}, k3_1_2: "i"}
+      %{k3_0_1: {:ok, "f"}, k3_0_2: {:error, {:err_5, %{input: 2}}}},
+      %{k3_1_1: {:error, {:err_6, %{input: 3}}}, k3_1_2: "i"}
     ],
-    k4: {:error, {:err_6, %{input: 4}}},
+    k4: {:error, {:err_7, %{input: 4}}},
     k5: "k"
   }
 
@@ -33,17 +33,14 @@ defmodule Resourceful.ErrorTest do
     k5: "k"
   }
 
-  test "all/1" do
-    assert Error.all(@data_with_errors) ==
-             [
-               err_1: %{input: 0, source: [:k1, 1]},
-               err_2: %{input: 1, source: [:k1, 2, 0]},
-               err_3: %{input: "x", source: [:k2, :k2_2]},
-               err_4: %{input: "y", source: [:k2, :k2_3, 2]},
-               err_4: %{input: 2, source: [:k3, 0, :k3_0_2]},
-               err_5: %{input: 3, source: [:k3, 1, :k3_1_1]},
-               err_6: %{input: 4, source: [:k4]}
-             ]
+  test "all/2" do
+    assert Error.all(@data_with_errors) == Error.list(@data_with_errors)
+
+    assert Error.all(@data_with_errors, auto_source: true) ==
+             @data_with_errors |> Error.auto_source() |> Error.list()
+
+    assert Error.all({:error, :err_1}) == [error: :err_1]
+    assert Error.all({:error, :err_1}, auto_source: true) == [error: :err_1]
 
     assert Error.all(@data_without_errors) == []
   end
@@ -53,9 +50,38 @@ defmodule Resourceful.ErrorTest do
     assert Error.any?(ok: 1, error: :invalid) == true
     assert Error.any?(%{k1: {:error, :invalid}, k2: {:ok, 2}}) == true
     assert Error.any?(@data_with_errors) == true
+
     refute Error.any?({:ok, :error}) == true
     refute Error.any?(1) == true
     refute Error.any?(@data_without_errors) == true
+  end
+
+  test "auto_source/1" do
+    assert Error.auto_source(@data_with_errors) ==
+             %{
+               k1: [
+                 {:ok, "a"},
+                 {:error, {:err_1, %{input: 0, source: [:k1, 1]}}},
+                 [{:error, {:err_2, %{input: 1, source: [:k1, 2, 0]}}}, "d", "e"]
+               ],
+               k2: %{
+                 k2_1: {:ok, 1},
+                 k2_2: {:error, {:err_3, %{input: "x", source: [:k2, :k2_2]}}},
+                 k2_3: [3, 4, {:error, {:err_4, %{input: "y", source: [:k2, :k2_3, 2]}}}]
+               },
+               k3: [
+                 %{
+                   k3_0_1: {:ok, "f"},
+                   k3_0_2: {:error, {:err_5, %{input: 2, source: [:k3, 0, :k3_0_2]}}}
+                 },
+                 %{
+                   k3_1_1: {:error, {:err_6, %{input: 3, source: [:k3, 1, :k3_1_1]}}},
+                   k3_1_2: "i"
+                 }
+               ],
+               k4: {:error, {:err_7, %{input: 4, source: [:k4]}}},
+               k5: "k"
+             }
   end
 
   test "delete_context_key/2" do
@@ -63,6 +89,21 @@ defmodule Resourceful.ErrorTest do
 
     assert error |> Error.delete_context_key(:source) == error
     assert error |> Error.delete_context_key(:input) == {:error, {:invalid, %{}}}
+  end
+
+  test "list/1" do
+    assert Error.list(@data_with_errors) ==
+             [
+               error: {:err_1, %{input: 0}},
+               error: {:err_2, %{input: 1}},
+               error: {:err_3, %{input: "x"}},
+               error: {:err_4, %{input: "y"}},
+               error: {:err_5, %{input: 2}},
+               error: {:err_6, %{input: 3}},
+               error: {:err_7, %{input: 4}}
+             ]
+
+    assert Error.all(@data_without_errors) == []
   end
 
   test "ok_value/1" do
@@ -78,6 +119,9 @@ defmodule Resourceful.ErrorTest do
 
   test "or_ok/1" do
     assert Error.or_ok(@data_with_errors) == {:error, Error.all(@data_with_errors)}
+
+    assert Error.or_ok(@data_with_errors, auto_source: true) ==
+             {:error, Error.all(@data_with_errors, auto_source: true)}
 
     assert Error.or_ok(@data_without_errors) == {:ok, Error.ok_value(@data_without_errors)}
   end
@@ -119,9 +163,23 @@ defmodule Resourceful.ErrorTest do
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
+  test "with_detail/2" do
+    assert :type |> Error.with_detail("detail") ==
+             {:error, {:type, %{detail: "detail"}}}
+  end
+
+  test "with_input/2" do
+    assert :type |> Error.with_input("input") ==
+             {:error, {:type, %{input: "input"}}}
+  end
+
+  test "with_key/2" do
+    assert :type |> Error.with_key("key") == {:error, {:type, %{key: "key"}}}
+  end
+
   test "with_source/3" do
     assert :type |> Error.with_source(:key, %{input: "x"}) ==
-      {:error, {:type, %{input: "x", source: [:key]}}}
+             {:error, {:type, %{input: "x", source: [:key]}}}
 
     assert {:error, :type} |> Error.with_source(:key) ==
              {:error, {:type, %{source: [:key]}}}

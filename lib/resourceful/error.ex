@@ -56,6 +56,14 @@ defmodule Resourceful.Error do
   * `:input`: A text representation of the actual input given by the client. It
   should be as close as possible to the original. (In general, `IO.inspect/1` is
   used.)
+  * `:key`: Not to be confused with `:source`, a `:key` key should always be
+  present when a lookup of data is done by some sort of key and there is a
+  failure.
+  * `:value`: Not to be confused with `:input`, a `:value` key
+
+  **Note:** all of these keys have convenience functions as it is a very common
+  convention to create a new error with one of these keys or add one to an
+  existing error.
 
   ### Error Types
 
@@ -68,41 +76,34 @@ defmodule Resourceful.Error do
 
   Contextual errors of a particular type should always contain at least some
   expected keys in their context maps. For example, `:attribute_not_found`
-  should always contain a `:source` and may contain other information. More is
+  should always contain a `:name` and may contain other information. More is
   usually better when it comes to errors.
+
+  Keys should remain consistent in their use. `:invalid_filter_operator`, for
+  example, should always contain an `:attribute` key implying that the failure
+  was on a valid attribute whereas `:attribute_not_found` contains a `:key` key
+  implying it was never resolved to an actual attribute.
   """
 
   @doc """
-  Transforms an arbitrary data structure that may contain errors into a single,
-  flat list of those errors. Non-error values are removed. Collections are
-  checked recursively.
-
-  Maps are given special treatment in that their values are checked but keys
-  used only to define a `:source`.
-
-  By convention, simple errors aren't deeply nested so converting to a flat list
-  shouldn't cause any confusion about the origin of the errors. In situations
-  where nested data may contain errors, it is important to use complex errors
-  that contain `source` information.
-
-  This format is meant to keep reading errors fairly simple and consistent at
-  the edge. Clients can rely on reading a single list of errors regardless of
-  whether transversing nested validation failures or handling more simple single
-  fault situations.
-
-  This function is also designed with another convention in mind: mixing
-  successes and failures in a single payload. A design goal of error use in this
-  library is to wait until as late as possible to return errors. That way, a
-  single request can return the totality of its failure to the client. This way,
-  many different paths can be evaluated and if there are any errors along the
-  way, those errors can be returned in full.
+  Mostly a convenience function to use instead of `list/1` with the option to
+  auto source errors as well. Additionally it will take a non-collection value
+  and convert it to a list.
 
   Returns a list of errors.
   """
-  def all(errors) when is_list(errors) or is_map(errors),
-    do: errors |> flatten_errors()
+  def all(errors, opts \\ [])
 
-  def all(value), do: [value] |> all()
+  def all(errors, opts) when is_list(errors) or is_map(errors) do
+    if Keyword.get(opts, :auto_source) do
+      errors |> auto_source()
+    else
+      errors
+    end
+    |> list()
+  end
+
+  def all(value, opts), do: [value] |> all([auto_source: false] ++ opts)
 
   @doc """
   Recursively checks arbitrary data structures for any basic or contextual
@@ -119,6 +120,32 @@ defmodule Resourceful.Error do
   def any?(_), do: false
 
   @doc """
+  Transverses an arbitrary data structure that may contain errors and prepends
+  `:source` data given the error's position in the data structure using either
+  an index from a list or a key from a map.
+
+  **Note:** This will not work for keyword lists. In order to infer source
+  information they must first be converted to maps.
+
+  Returns input data structure with errors modified to contain `:source` in
+  their context.
+  """
+  def auto_source(error_or_enum, prefix \\ [])
+
+  def auto_source(%{} = map, prefix),
+    do: map |> Map.new(fn {src, val} -> {src, auto_source(val, prefix ++ [src])} end)
+
+  def auto_source(list, prefix) when is_list(list) do
+    list
+    |> Enum.with_index()
+    |> Enum.map(fn {val, src} -> auto_source(val, prefix ++ [src]) end)
+  end
+
+  def auto_source({:error, _} = error, prefix), do: error |> prepend_source(prefix)
+
+  def auto_source(non_error, _), do: non_error
+
+  @doc """
   Deletes `key` from an error's context map if present.
 
   Returns an error tuple.
@@ -127,6 +154,31 @@ defmodule Resourceful.Error do
     do: {:error, {type, Map.delete(context, key)}}
 
   def delete_context_key({:error, _} = error, _), do: error
+
+  @doc """
+  Transforms an arbitrary data structure that may contain errors into a single,
+  flat list of those errors. Non-error values are removed. Collections are
+  checked recursively.
+
+  Maps are given special treatment in that their values are checked but their
+  keys are discarded.
+
+  This format is meant to keep reading errors fairly simple and consistent at
+  the edge. Clients can rely on reading a single list of errors regardless of
+  whether transversing nested validation failures or handling more simple single
+  fault situations.
+
+  This function is also designed with another convention in mind: mixing
+  successes and failures in a single payload. A design goal of error use in this
+  library is to wait until as late as possible to return errors. That way, a
+  single request can return the totality of its failure to the client. This way,
+  many different paths can be evaluated and if there are any errors along the
+  way, those errors can be returned in full.
+
+  Returns a list of errors.
+  """
+  def list(enum) when is_list(enum) or is_map(enum),
+    do: enum |> flatten_maps() |> List.flatten() |> Enum.filter(&any?/1)
 
   @doc """
   Recursively transforms arbitrary data structures containing `:ok` tuples with
@@ -161,9 +213,9 @@ defmodule Resourceful.Error do
   Returns either a list of errors wrapped in an `:error` tuple or valid data
   wrapped in an `:ok` tuple.
   """
-  def or_ok(value) do
+  def or_ok(value, opts \\ []) do
     case any?(value) do
-      true -> {:error, all(value)}
+      true -> {:error, all(value, opts)}
       _ -> {:ok, ok_value(value)}
     end
   end
@@ -177,11 +229,8 @@ defmodule Resourceful.Error do
 
   Returns a contextual error tuple.
   """
-  def prepend_source(errors, prefix) when is_list(errors),
-    do: errors |> Enum.map(&prepend_source(&1, prefix))
-
   def prepend_source({:error, {error, %{source: source} = context}}, prefix),
-    do: {:error, {error, %{context | source: List.wrap(prefix) ++ List.wrap(source)}}}
+    do: {:error, {error, %{context | source: List.wrap(prefix) ++ source}}}
 
   def prepend_source({:error, {error, %{} = context}}, prefix),
     do: {:error, {error, context |> Map.put(:source, List.wrap(prefix))}}
@@ -209,6 +258,32 @@ defmodule Resourceful.Error do
     do: error_or_type |> with_context() |> with_context_value(key, value)
 
   @doc """
+  Convenience function to create or modify an existing error with `:detail`
+  context.
+
+  Returns a contextual error.
+  """
+  def with_detail(error_or_type, detail),
+    do: error_or_type |> with_context(:detail, detail)
+
+  @doc """
+  Convenience function to create or modify an existing error with `:input`
+  context.
+
+  Returns a contextual error.
+  """
+  def with_input(error_or_type, input),
+    do: error_or_type |> with_context(:input, input)
+
+  @doc """
+  Convenience function to create or modify an existing error with `:key`
+  context.
+
+  Returns a contextual error.
+  """
+  def with_key(error_or_type, key), do: error_or_type |> with_context(:key, key)
+
+  @doc """
   Adds source context to an error and replaces `:source` if present.
 
   Returns a contextual error tuple.
@@ -220,29 +295,13 @@ defmodule Resourceful.Error do
     |> prepend_source(source)
   end
 
-  defp all_value(%{} = map) do
-    map
-    |> Enum.filter(fn {_, val} -> any?(val) end)
-    |> Enum.map(fn {src, val} -> all_value(val) |> prepend_source(src) end)
-  end
-
-  defp all_value(list) when is_list(list) do
-    list
-    |> Enum.with_index()
-    |> Enum.filter(fn {val, _} -> any?(val) end)
-    |> Enum.map(fn {val, src} -> all_value(val) |> prepend_source(src) end)
-  end
-
-  defp all_value({:error, _} = error), do: error
-
   defp contextual_error(type), do: {:error, {type, %{}}}
 
-  defp error_value({:error, value}), do: value
+  defp flatten_maps(list) when is_list(list), do: list |> Enum.map(&flatten_maps/1)
 
-  defp error_value(value), do: value
+  defp flatten_maps(%{} = map), do: map |> Map.values() |> flatten_maps()
 
-  defp flatten_errors(errors),
-    do: errors |> all_value() |> List.flatten() |> Enum.map(&error_value/1)
+  defp flatten_maps(value), do: value
 
   defp merge_context({:error, {type, %{} = context}}, new_context),
     do: {:error, {type, Map.merge(context, new_context)}}
