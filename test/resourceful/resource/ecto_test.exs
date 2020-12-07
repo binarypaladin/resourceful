@@ -5,7 +5,7 @@ defmodule Resourceful.Resource.EctoTest do
   alias Resourceful.Resource.Ecto
   alias Resourceful.Test.Album
 
-  test "attribute" do
+  test "attribute/3" do
     attr = Ecto.attribute(Album, :tracks, query: true)
     assert attr.filter? == true
     assert attr.map_to == :tracks
@@ -14,10 +14,10 @@ defmodule Resourceful.Resource.EctoTest do
     assert attr.type == :integer
   end
 
-  test "resource" do
+  test "resource/2" do
     resource = Ecto.resource(Album, transform_names: &Inflex.camelize(&1, :lower))
 
-    assert Resource.attribute_names(resource) ==
+    assert resource.attributes |> Map.keys() ==
              ["artist", "id", "releaseDate", "title", "tracks"]
 
     assert resource.attributes |> Map.values() |> Enum.all?(& &1.filter?) == false
@@ -34,7 +34,7 @@ defmodule Resourceful.Resource.EctoTest do
     assert Resource.attribute!(resource, "artist").sort? == false
     assert Resource.attribute!(resource, "id").filter? == false
     assert Resource.attribute!(resource, "id").sort? == true
-    assert Resource.attribute_names(resource) == ["artist", "id"]
+    assert resource.attributes |> Map.keys() == ["artist", "id"]
 
     resource = Ecto.resource(Album, except: [:tracks])
     assert map_size(resource.attributes) == 4

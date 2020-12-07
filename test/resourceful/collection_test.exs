@@ -14,11 +14,11 @@ defmodule Resourceful.CollectionTest do
 
   @opts [ecto_repo: Repo]
 
-  test "filters, sorts, and paginates a list" do
+  test "all/2" do
     opts =
       @opts ++
         [
-          filter: "artist eq Duran Duran",
+          filter: {"artist", "Duran Duran"},
           page: 2,
           per: 2,
           sort: "-release_date"
@@ -30,8 +30,8 @@ defmodule Resourceful.CollectionTest do
     assert Fixtures.albums_query() |> Collection.all(opts) |> all_by(:id) == ids
   end
 
-  test "filters a list" do
-    filter = "title eq Rio"
+  test "filter/3" do
+    filter = {"title", "eq", "Rio"}
     ids = [3]
 
     assert ids ==

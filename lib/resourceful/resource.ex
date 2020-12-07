@@ -1,13 +1,15 @@
 defmodule Resourceful.Resource do
   alias __MODULE__
   alias __MODULE__.Attribute
+  alias Resourceful.Error
   alias Resourceful.Collection.{Filter, Sort}
 
   @enforce_keys [
     :attributes,
     :id,
+    :meta,
     :max_filters,
-    :max_sorts,
+    :max_sorters,
     :resource_type
   ]
 
@@ -19,59 +21,75 @@ defmodule Resourceful.Resource do
     %Resource{
       attributes: attributes,
       id: opt_id(Keyword.get(opts, :id, default_id(attributes))),
+      meta: opt_meta(Keyword.get(opts, :meta, %{})),
       max_filters: opt_max(Keyword.get(opts, :max_filters, 4)),
-      max_sorts: opt_max(Keyword.get(opts, :max_sorts, 2)),
+      max_sorters: opt_max(Keyword.get(opts, :max_sorters, 2)),
       resource_type: opt_resource_type(resource_type)
     }
   end
 
   def attribute(resource, %Attribute{} = attr),
-    do: resource |> put(:attributes, Map.put(resource.attributes, attr.name, attr))
+    do: put(resource, :attributes, resource.attributes |> Map.put(attr.name, attr))
 
   def attribute(%Resource{} = resource, name) do
     case Map.fetch(resource.attributes, name) do
       {:ok, _} = ok -> ok
-      _ -> {:error, {:attribute_not_found, %{name: name}}}
+      _ -> Error.with_key(:attribute_not_found, name)
     end
   end
 
   def attribute!(%Resource{} = resource, name), do: Map.fetch!(resource.attributes, name)
 
-  def attribute_names(%Resource{} = resource), do: Map.keys(resource.attributes)
-
-  def filter(resource, filter) when is_binary(filter), do: filter(resource, [filter])
-
-  def filter(%Resource{} = resource, filters)
-      when is_map(filters) or is_list(filters) do
-    filters
-    |> Enum.map(&validate_filter(resource, &1))
-    |> check_max(resource.max_filters, :max_filters_exceeded)
+  def get(%Resource{} = resource, attribute_name, data) do
+    case attribute(resource, attribute_name) do
+      {:ok, attr} -> Attribute.get(attr, data)
+      _ -> nil
+    end
   end
+
+  def get_id(resource, data), do: get(resource, resource.id, data)
 
   def id(resource, id_attribute), do: resource |> put(:id, opt_id(id_attribute))
 
   def max_filters(resource, max_filters),
     do: resource |> put(:max_filters, opt_max(max_filters))
 
-  def max_sorts(resource, max_sorts),
-    do: resource |> put(:max_sorts, opt_max(max_sorts))
+  def max_sorters(resource, max_sorters),
+    do: resource |> put(:max_sorters, opt_max(max_sorters))
+
+  def meta(resource, key, value) when is_atom(key),
+    do: resource |> put(:meta, Map.put(resource.meta, key, value))
 
   def resource_type(resource, resource_type),
     do: resource |> put(:resource_type, opt_resource_type(resource_type))
 
-  def sort(resource, sorters) when is_list(sorters) do
-    sorters
-    |> Enum.map(&validate_sort(resource, &1))
-    |> check_max(resource.max_sorts, :max_sorts_exceeded)
+  def validate_filter(resource, filter) do
+    with {:ok, {field, op, val}} <- Filter.cast(filter),
+         {:ok, attr} <- attribute(resource, field),
+         {:ok, _} = ok <- Attribute.validate_filter(attr, op, val),
+         do: ok
   end
 
-  def sort(resource, sorters) when is_binary(sorters),
-    do: resource |> sort(Sort.string_list(sorters))
+  def validate_max_filters(list, resource, context \\ %{}),
+    do: check_max(list, resource.max_filters, :max_filters_exceeded, context)
 
-  defp check_max(list, max, error_type) when length(list) > max,
-    do: [{:error, {error_type, %{max_allowed: max}}}] ++ list
+  def validate_max_sorters(list, resource, context \\ %{}),
+    do: check_max(list, resource.max_sorters, :max_sorters_exceeded, context)
 
-  defp check_max(list, _, _), do: list
+  def validate_sorter(resource, sorter) do
+    with {:ok, {order, field}} <- Sort.cast(sorter),
+         {:ok, attr} <- attribute(resource, field),
+         {:ok, _} = ok <- Attribute.validate_sorter(attr, order),
+         do: ok
+  end
+
+  defp check_max(list, max, error_type, context) when length(list) > max do
+    [
+      error_type |> Error.with_context(Map.put(context, :max_allowed, max))
+    ] ++ list
+  end
+
+  defp check_max(list, _, _, _), do: list
 
   defp default_id(%{"id" => _}), do: "id"
 
@@ -104,24 +122,12 @@ defmodule Resourceful.Resource do
 
   defp opt_max(int) when is_integer(int) and int >= 0, do: int
 
+  defp opt_meta(%{} = map), do: map
+
   defp opt_resource_type(rtype) when is_atom(rtype), do: to_string(rtype)
 
   defp opt_resource_type(rtype) when is_binary(rtype), do: rtype
 
   defp put(%Resource{} = resource, key, value) when is_atom(key),
     do: resource |> Map.put(key, value)
-
-  defp validate_filter(resource, filter) do
-    with {:ok, {field, op, val}} <- Filter.cast(filter),
-         {:ok, attr} <- attribute(resource, field),
-         {:ok, _} = ok <- Attribute.validate_filter(attr, op, val),
-         do: ok
-  end
-
-  defp validate_sort(resource, sorter) do
-    with {:ok, {order, field}} <- Sort.cast(sorter),
-         {:ok, attr} <- attribute(resource, field),
-         {:ok, _} = ok <- Attribute.validate_sort(attr, order),
-         do: ok
-  end
 end

@@ -2,9 +2,7 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   use ExUnit.Case
 
   alias Resourceful.Collection.Ecto.Filters
-  alias Resourceful.Test.Album
-  alias Resourceful.Test.Fixtures
-  alias Resourceful.Test.Repo
+  alias Resourceful.Test.{Album, Fixtures, Repo}
 
   import Resourceful.Test.Helpers
 

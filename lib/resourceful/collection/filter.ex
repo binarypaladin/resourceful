@@ -22,6 +22,7 @@ defmodule Resourceful.Collection.Filter do
   """
 
   alias Resourceful.Collection.Delegate
+  alias Resourceful.Error
 
   @shorthand %{
     "eq" => %{func: :equal},
@@ -74,8 +75,6 @@ defmodule Resourceful.Collection.Filter do
     cast(["age", "gte", 18])
 
     cast(["age gte", 18])
-
-    cast("age gta 18")
   """
   def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
@@ -84,21 +83,18 @@ defmodule Resourceful.Collection.Filter do
 
   def cast([field_and_op, val]), do: cast({field_and_op, val})
 
-  def cast(input) when is_list(input) and length(input) == 3,
-    do: List.to_tuple(input) |> cast()
+  def cast(filter) when is_list(filter) and length(filter) == 3,
+    do: filter |> List.to_tuple() |> cast()
 
-  def cast(input) when is_binary(input),
-    do: input |> String.split(" ", parts: 3) |> cast()
+  def cast(filter), do: :invalid_filter |> Error.with_context(%{filter: filter})
 
-  def cast(input), do: {:error, {:invalid_filter_input, %{input: input}}}
-
-  def cast!(input) do
-    case cast(input) do
+  def cast!(filter) do
+    case cast(filter) do
       {:ok, filter} ->
         filter
 
-      {:error, {_, %{input: input}}} ->
-        raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(input)}"
+      {:error, {_, %{filter: filter}}} ->
+        raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(filter)}"
     end
   end
 

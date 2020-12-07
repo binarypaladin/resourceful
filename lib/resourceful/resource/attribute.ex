@@ -1,5 +1,6 @@
 defmodule Resourceful.Resource.Attribute do
   alias __MODULE__
+  alias Resourceful.Error
   alias Resourceful.Collection.Filter
 
   @enforce_keys [
@@ -28,14 +29,21 @@ defmodule Resourceful.Resource.Attribute do
 
   def cast(%Attribute{name: name, type: type}, input) do
     case Ecto.Type.cast(type, input) do
-      {:ok, _} = ok -> ok
-      _ -> {:error, {:type_cast_failure, %{source: name, input: input, type: type}}}
+      {:ok, _} = ok ->
+        ok
+
+      _ ->
+        :type_cast_failure
+        |> Error.with_context(%{attribute: name, input: input, type: type})
     end
   end
 
+  def error(%Attribute{name: name}, type, context \\ %{}),
+    do: type |> Error.with_context(Map.merge(context, %{attribute: name}))
+
   def filter(attr, filter), do: attr |> put(:filter?, opt_bool(filter))
 
-  def get(attr, data), do: attr |> attr.getter.(data)
+  def get(%Attribute{} = attr, data), do: attr |> attr.getter.(data)
 
   def getter(attr, getter), do: attr |> put(:getter, opt_getter(getter))
 
@@ -56,15 +64,15 @@ defmodule Resourceful.Resource.Attribute do
   end
 
   def validate_filter(%Attribute{} = attr, _, _),
-    do: source_error(attr, :cannot_filter_by_attribute)
+    do: error(attr, :cannot_filter_by_attribute)
 
-  def validate_sort(attr, order \\ :asc)
+  def validate_sorter(attr, order \\ :asc)
 
-  def validate_sort(%Attribute{map_to: map_to, sort?: true}, order),
+  def validate_sorter(%Attribute{map_to: map_to, sort?: true}, order),
     do: {:ok, {order, map_to}}
 
-  def validate_sort(%Attribute{} = attr, _),
-    do: source_error(attr, :cannot_sort_by_attribute)
+  def validate_sorter(%Attribute{} = attr, _),
+    do: error(attr, :cannot_sort_by_attribute)
 
   defp as_atom(value) when is_atom(value), do: value
 
@@ -98,13 +106,10 @@ defmodule Resourceful.Resource.Attribute do
 
   defp put_atom(attr, key, value) when is_binary(value), do: put(attr, key, as_atom(value))
 
-  def source_error(%{name: name}, type, details \\ %{}),
-    do: {:error, {type, Map.put(details, :source, name)}}
-
   defp validate_filter_operator(attr, op, val) do
     case Filter.valid_operator?(op, val) do
       true -> {:ok, {attr.map_to, op, val}}
-      _ -> source_error(attr, :invalid_filter_operator, %{operator: op, value: val})
+      _ -> error(attr, :invalid_filter_operator, %{operator: op, value: val})
     end
   end
 end

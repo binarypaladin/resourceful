@@ -8,6 +8,7 @@ defmodule Resourceful.Collection.Sort do
   """
 
   alias Resourceful.Collection.Delegate
+  alias Resourceful.Error
 
   @doc ~S"""
   Returns a data source that is sorted in accordance with `sorters`.
@@ -46,17 +47,17 @@ defmodule Resourceful.Collection.Sort do
 
   def cast({order, _} = sorter) when order in [:asc, :desc], do: {:ok, sorter}
 
-  def cast(input) when is_binary(input) or is_atom(input), do: cast({:asc, input})
+  def cast(sorter) when is_binary(sorter) or is_atom(sorter), do: cast({:asc, sorter})
 
-  def cast(input), do: {:error, {:invalid_sorter_input, %{input: input}}}
+  def cast(sorter), do: :invalid_sorter_sorter |> Error.with_context(%{sorter: sorter})
 
-  def cast!(input) do
-    case cast(input) do
+  def cast!(sorter) do
+    case cast(sorter) do
       {:ok, sorter} ->
         sorter
 
-      {:error, {_, %{input: input}}} ->
-        raise ArgumentError, message: "Cannot cast sorter: #{Kernel.inspect(input)}"
+      {:error, {_, %{sorter: sorter}}} ->
+        raise ArgumentError, message: "Cannot cast sorter: #{Kernel.inspect(sorter)}"
     end
   end
 
