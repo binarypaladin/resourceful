@@ -49,7 +49,7 @@ defmodule Resourceful.Collection.Sort do
 
   def cast(sorter) when is_binary(sorter) or is_atom(sorter), do: cast({:asc, sorter})
 
-  def cast(sorter), do: :invalid_sorter_sorter |> Error.with_context(%{sorter: sorter})
+  def cast(sorter), do: :invalid_sorter |> Error.with_context(%{sorter: sorter})
 
   def cast!(sorter) do
     case cast(sorter) do
