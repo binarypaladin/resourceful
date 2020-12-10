@@ -85,6 +85,8 @@ defmodule Resourceful.Error do
   implying it was never resolved to an actual attribute.
   """
 
+  @error_type_defaults Application.get_env(:resourceful, :error_type_defaults)
+
   @doc """
   Mostly a convenience function to use instead of `list/1` with the option to
   auto source errors as well. Additionally it will take a non-collection value
@@ -146,6 +148,17 @@ defmodule Resourceful.Error do
   def auto_source(non_error, _), do: non_error
 
   @doc """
+  Extracts the context map from an error.
+
+  Returns a context map.
+  """
+  def context({:error, {_, %{} = context}}), do: context
+
+  def context({:error, _}), do: %{}
+
+  def context(%{} = context), do: context
+
+  @doc """
   Deletes `key` from an error's context map if present.
 
   Returns an error tuple.
@@ -154,6 +167,51 @@ defmodule Resourceful.Error do
     do: {:error, {type, Map.delete(context, key)}}
 
   def delete_context_key({:error, _} = error, _), do: error
+
+  @doc """
+  Many error types should, at a minimum, have an associated `:title`. If there
+  are regular context values, it should also include a `:detail` value as well.
+  Both of these keys provide extra information about the nature of the error
+  and can help the client understand the particulars of the provided context.
+  While it might not be readily obvious what `:key` means in an error, if it is
+  used in `:detail` it will help the client understand the significance.
+
+  Unlike the error's type itself--which realistically should serve as an error
+  code of sorts--the title should should be more human readable and able to be
+  localized, although it should be consistent. Similarly, detail should be able
+  to be localized although it can change depending on the specifics of the error
+  or values in the context map.
+
+  This function handles injecting default `:title` and `:detail` items into the
+  context map if they are available for an error type and replacing context-
+  related bindings in messages. (See `message_with_context/2` for details.)
+
+  In the future, this is also where localization should happen.
+
+  Returns an error tuple.
+  """
+  def humanize(error, opts \\ [])
+
+  def humanize(errors, opts) when is_list(errors),
+    do: errors |> Enum.map(&humanize(&1, opts))
+
+  def humanize({:error, errors}, opts) when is_list(errors),
+    do: {:error, humanize(errors, opts)}
+
+  def humanize({:error, {type, %{} = context}}, _opts) do
+    {:error,
+     {type,
+      [:detail, :title]
+      |> Enum.reduce(context, fn key, new_ctx ->
+        case Map.get(context, key) || default_type_message([type, key]) do
+          nil -> new_ctx
+          msg -> new_ctx |> Map.put(key, message_with_context(msg, context))
+        end
+      end)}}
+  end
+
+  def humanize({:error, _} = error, opts),
+    do: error |> with_context() |> humanize(opts)
 
   @doc """
   Transforms an arbitrary data structure that may contain errors into a single,
@@ -179,6 +237,20 @@ defmodule Resourceful.Error do
   """
   def list(enum) when is_list(enum) or is_map(enum),
     do: enum |> flatten_maps() |> List.flatten() |> Enum.filter(&any?/1)
+
+  @doc """
+  Replaces context bindings in a message with atom keys in a context map.
+
+  A message of `"Invalid input %{input}." would have `%{input}` replaced with
+  the value in the context map of `:input`.
+
+  Returns a string.
+  """
+  def message_with_context(message, %{} = context) do
+    Regex.replace(~r/%\{(\w+)\}/, message, fn _, key ->
+      context |> Map.get(String.to_atom(key)) |> to_string()
+    end)
+  end
 
   @doc """
   Recursively transforms arbitrary data structures containing `:ok` tuples with
@@ -258,15 +330,6 @@ defmodule Resourceful.Error do
     do: error_or_type |> with_context() |> with_context_value(key, value)
 
   @doc """
-  Convenience function to create or modify an existing error with `:detail`
-  context.
-
-  Returns a contextual error.
-  """
-  def with_detail(error_or_type, detail),
-    do: error_or_type |> with_context(:detail, detail)
-
-  @doc """
   Convenience function to create or modify an existing error with `:input`
   context.
 
@@ -296,6 +359,8 @@ defmodule Resourceful.Error do
   end
 
   defp contextual_error(type), do: {:error, {type, %{}}}
+
+  defp default_type_message(path), do: @error_type_defaults |> get_in(path)
 
   defp flatten_maps(list) when is_list(list), do: list |> Enum.map(&flatten_maps/1)
 

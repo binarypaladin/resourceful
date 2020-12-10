@@ -84,11 +84,40 @@ defmodule Resourceful.ErrorTest do
              }
   end
 
+  test "context/2" do
+    context = %{input: "x"}
+
+    assert {:error, {:invalid, context}} |> Error.context() == context
+    assert {:error, :invalid} |> Error.context() == %{}
+    assert context |> Error.context() == context
+  end
+
   test "delete_context_key/2" do
     error = {:error, {:invalid, %{input: "x"}}}
 
     assert error |> Error.delete_context_key(:source) == error
     assert error |> Error.delete_context_key(:input) == {:error, {:invalid, %{}}}
+  end
+
+  test "humanize/2" do
+    error = {:error, {:type_cast_failure, %{input: "x", type: :date}}}
+
+    assert error |> Error.humanize() ==
+             {:error,
+              {:type_cast_failure,
+               %{
+                 detail: "`x` cannot be cast to type `date`.",
+                 input: "x",
+                 title: "Type Cast Failure",
+                 type: :date
+               }}}
+
+    error = error |> Error.with_context(%{detail: "`%{input}` isn't a %{type}", title: "Fail"})
+
+    assert error |> Error.humanize() ==
+             {:error,
+              {:type_cast_failure,
+               %{detail: "`x` isn't a date", input: "x", title: "Fail", type: :date}}}
   end
 
   test "list/1" do
@@ -104,6 +133,16 @@ defmodule Resourceful.ErrorTest do
              ]
 
     assert Error.all(@data_without_errors) == []
+  end
+
+  test "message_with_context/2" do
+    message = "Hello, my name is %{name}."
+
+    assert message |> Error.message_with_context(%{name: "Inigo Montoya"}) ==
+             "Hello, my name is Inigo Montoya."
+
+    assert message |> Error.message_with_context(%{"name" => "Rupert"}) ==
+             "Hello, my name is ."
   end
 
   test "ok_value/1" do
@@ -161,11 +200,6 @@ defmodule Resourceful.ErrorTest do
 
     assert {:error, {:type, %{k1: "v1"}}} |> Error.with_context(:k2, "v2") ==
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
-  end
-
-  test "with_detail/2" do
-    assert :type |> Error.with_detail("detail") ==
-             {:error, {:type, %{detail: "detail"}}}
   end
 
   test "with_input/2" do
