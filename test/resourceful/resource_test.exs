@@ -64,7 +64,7 @@ defmodule Resourceful.ResourceTest do
     assert resource |> Resource.attribute("id") == {:ok, attr}
 
     assert resource |> Resource.attribute("ID") ==
-             {:error, {:attribute_not_found, %{key: "ID"}}}
+             {:error, {:attribute_not_found, %{key: "ID", type: "object"}}}
 
     assert resource |> Resource.attribute!("id") == attr
   end
@@ -102,7 +102,7 @@ defmodule Resourceful.ResourceTest do
     assert resource |> Resource.validate_filter({"artist eq", "Duran Duran"}) == ok
 
     assert resource |> Resource.validate_filter({"invalid", "Duran Duran"}) ==
-             {:error, {:attribute_not_found, %{key: "invalid"}}}
+             {:error, {:attribute_not_found, %{key: "invalid", type: "albums"}}}
 
     assert resource |> Resource.validate_filter({"artist et", "Duran Duran"}) ==
              {:error,
@@ -142,6 +142,6 @@ defmodule Resourceful.ResourceTest do
     assert resource |> Resource.validate_sorter("-releaseDate") == ok
 
     assert resource |> Resource.validate_sorter("-releaseDat") ==
-             {:error, {:attribute_not_found, %{key: "releaseDat"}}}
+             {:error, {:attribute_not_found, %{key: "releaseDat", type: "albums"}}}
   end
 end

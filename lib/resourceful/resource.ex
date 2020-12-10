@@ -34,7 +34,7 @@ defmodule Resourceful.Resource do
   def attribute(%Resource{} = resource, name) do
     case Map.fetch(resource.attributes, name) do
       {:ok, _} = ok -> ok
-      _ -> Error.with_key(:attribute_not_found, name)
+      _ -> Error.with_context(:attribute_not_found, %{key: name, type: resource.resource_type})
     end
   end
 
