@@ -99,6 +99,38 @@ defmodule Resourceful.ErrorTest do
     assert error |> Error.delete_context_key(:input) == {:error, {:invalid, %{}}}
   end
 
+  test "from_changeset/1" do
+    types = %{number: :integer, size: :integer}
+
+    change = fn data ->
+      {data, types}
+      |> Ecto.Changeset.cast(data, Map.keys(types))
+      |> Ecto.Changeset.validate_required(:number)
+      |> Ecto.Changeset.validate_number(:number, greater_than_or_equal_to: 1)
+      |> Ecto.Changeset.validate_number(:size, greater_than_or_equal_to: 1)
+    end
+
+    errors = change.(%{"number" => "0", "size" => "a"})
+
+    assert errors |> Error.from_changeset() ==
+             [
+               error: {
+                 :input_validation_failure,
+                 %{
+                   detail: "must be greater than or equal to %{number}",
+                   input: "0",
+                   kind: :greater_than_or_equal_to,
+                   number: 1,
+                   source: [:number]
+                 }
+               },
+               error: {
+                 :type_cast_failure,
+                 %{input: "a", source: [:size], type: :integer}
+               }
+             ]
+  end
+
   test "humanize/2" do
     error = {:error, {:type_cast_failure, %{input: "x", type: :date}}}
 

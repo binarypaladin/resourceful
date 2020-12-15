@@ -2,9 +2,9 @@ defmodule Resourceful.Error do
   @moduledoc """
   Errors in `Resourceful` follow a few conventions. This module contains
   functions to help work with those conventions. Client-facing errors are
-  loosely inspired by and should be easily converted to [JSON API-style
+  loosely inspired by and should be easily converted to [JSON:API-style
   errors](https://jsonapi.org/format/#errors), however they should also be
-  suitable when JSON API isn't used at all.
+  suitable when JSON:API isn't used at all.
 
   ## Error Structure
 
@@ -167,6 +167,34 @@ defmodule Resourceful.Error do
     do: {:error, {type, Map.delete(context, key)}}
 
   def delete_context_key({:error, _} = error, _), do: error
+
+  @doc """
+  Converts errors from an Ecto Changeset into Resourceful errors. The `type` is
+  inferred from the `:validation` key as Resourceful tends to use longer names.
+  Rather than relying on separate input params, the `:input` is inserted from
+  `data`, and `:source` is also inferred.
+
+  Returns an error tuple or list or error tuples.
+  """
+  def from_changeset(%Ecto.Changeset{data: data, errors: errors, valid?: false}),
+    do: from_changeset(errors, data)
+
+  def from_changeset(errors, data \\ %{})
+
+  def from_changeset(errors, %{} = data) when is_list(errors),
+    do: Enum.map(errors, &from_changeset(&1, data))
+
+  def from_changeset({source, {detail, context_list}}, %{} = data)
+      when is_atom(source) do
+    context_list
+    |> Map.new()
+    |> Map.merge(%{
+      detail: detail,
+      input: changeset_input(source, data),
+      source: [source]
+    })
+    |> changeset_error()
+  end
 
   @doc """
   Many error types should, at a minimum, have an associated `:title`. If there
@@ -357,6 +385,18 @@ defmodule Resourceful.Error do
     |> delete_context_key(:source)
     |> prepend_source(source)
   end
+
+  defp changeset_error(%{validation: :cast} = context),
+    do: changeset_error(:type_cast_failure, context |> Map.delete(:detail))
+
+  defp changeset_error(%{} = context),
+    do: changeset_error(:input_validation_failure, context)
+
+  defp changeset_error(type, %{} = context),
+    do: {:error, {type, context |> Map.delete(:validation)}}
+
+  defp changeset_input(source, %{} = data),
+    do: Map.get(data, to_string(source)) || Map.get(data, source)
 
   defp contextual_error(type), do: {:error, {type, %{}}}
 
