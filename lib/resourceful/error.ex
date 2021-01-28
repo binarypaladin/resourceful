@@ -98,7 +98,7 @@ defmodule Resourceful.Error do
 
   def all(errors, opts) when is_list(errors) or is_map(errors) do
     if Keyword.get(opts, :auto_source) do
-      errors |> auto_source()
+      auto_source(errors)
     else
       errors
     end
@@ -115,9 +115,15 @@ defmodule Resourceful.Error do
   """
   def any?({:error, _}), do: true
 
-  def any?(list) when is_list(list), do: list |> Enum.any?(&any?/1)
+  def any?(list) when is_list(list), do: Enum.any?(list, &any?/1)
 
-  def any?(%{} = map), do: map |> Map.values() |> any?()
+  def any?(%Ecto.Changeset{valid?: valid}), do: !valid
+
+  def any?(%{} = map) do
+    map
+    |> Map.values()
+    |> any?()
+  end
 
   def any?(_), do: false
 
@@ -134,16 +140,21 @@ defmodule Resourceful.Error do
   """
   def auto_source(error_or_enum, prefix \\ [])
 
-  def auto_source(%{} = map, prefix),
-    do: map |> Map.new(fn {src, val} -> {src, auto_source(val, prefix ++ [src])} end)
+  def auto_source(%{} = map, prefix) do
+    Map.new(map, fn {src, val} ->
+      {src, auto_source(val, prefix ++ [src])}
+    end)
+  end
 
   def auto_source(list, prefix) when is_list(list) do
     list
-    |> Enum.with_index()
-    |> Enum.map(fn {val, src} -> auto_source(val, prefix ++ [src]) end)
+    |> Stream.with_index()
+    |> Enum.map(fn {val, src} ->
+      auto_source(val, prefix ++ [src])
+    end)
   end
 
-  def auto_source({:error, _} = error, prefix), do: error |> prepend_source(prefix)
+  def auto_source({:error, _} = error, prefix), do: prepend_source(error, prefix)
 
   def auto_source(non_error, _), do: non_error
 
@@ -163,8 +174,9 @@ defmodule Resourceful.Error do
 
   Returns an error tuple.
   """
-  def delete_context_key({:error, {type, %{} = context}}, key),
-    do: {:error, {type, Map.delete(context, key)}}
+  def delete_context_key({:error, {type, %{} = context}}, key) do
+    {:error, {type, Map.delete(context, key)}}
+  end
 
   def delete_context_key({:error, _} = error, _), do: error
 
@@ -176,13 +188,15 @@ defmodule Resourceful.Error do
 
   Returns an error tuple or list or error tuples.
   """
-  def from_changeset(%Ecto.Changeset{data: data, errors: errors, valid?: false}),
-    do: from_changeset(errors, data)
+  def from_changeset(%Ecto.Changeset{data: data, errors: errors, valid?: false}) do
+    from_changeset(errors, data)
+  end
 
   def from_changeset(errors, data \\ %{})
 
-  def from_changeset(errors, %{} = data) when is_list(errors),
-    do: Enum.map(errors, &from_changeset(&1, data))
+  def from_changeset(errors, %{} = data) when is_list(errors) do
+    Enum.map(errors, &from_changeset(&1, data))
+  end
 
   def from_changeset({source, {detail, context_list}}, %{} = data)
       when is_atom(source) do
@@ -220,11 +234,13 @@ defmodule Resourceful.Error do
   """
   def humanize(error, opts \\ [])
 
-  def humanize(errors, opts) when is_list(errors),
-    do: errors |> Enum.map(&humanize(&1, opts))
+  def humanize(errors, opts) when is_list(errors) do
+    Enum.map(errors, &humanize(&1, opts))
+  end
 
-  def humanize({:error, errors}, opts) when is_list(errors),
-    do: {:error, humanize(errors, opts)}
+  def humanize({:error, errors}, opts) when is_list(errors) do
+    {:error, humanize(errors, opts)}
+  end
 
   def humanize({:error, {type, %{} = context}}, _opts) do
     {:error,
@@ -238,8 +254,11 @@ defmodule Resourceful.Error do
       end)}}
   end
 
-  def humanize({:error, _} = error, opts),
-    do: error |> with_context() |> humanize(opts)
+  def humanize({:error, _} = error, opts) do
+    error
+    |> with_context()
+    |> humanize(opts)
+  end
 
   @doc """
   Transforms an arbitrary data structure that may contain errors into a single,
@@ -263,8 +282,12 @@ defmodule Resourceful.Error do
 
   Returns a list of errors.
   """
-  def list(enum) when is_list(enum) or is_map(enum),
-    do: enum |> flatten_maps() |> List.flatten() |> Enum.filter(&any?/1)
+  def list(enum) when is_list(enum) or is_map(enum) do
+    enum
+    |> flatten_maps()
+    |> List.flatten()
+    |> Enum.filter(&any?/1)
+  end
 
   @doc """
   Replaces context bindings in a message with atom keys in a context map.
@@ -276,7 +299,9 @@ defmodule Resourceful.Error do
   """
   def message_with_context(message, %{} = context) do
     Regex.replace(~r/%\{(\w+)\}/, message, fn _, key ->
-      context |> Map.get(String.to_atom(key)) |> to_string()
+      context
+      |> Map.get(String.to_atom(key))
+      |> to_string()
     end)
   end
 
@@ -296,7 +321,9 @@ defmodule Resourceful.Error do
   """
   def ok_value({:ok, value}), do: ok_value(value)
 
-  def ok_value(list) when is_list(list), do: list |> Enum.map(&ok_value/1)
+  def ok_value(list) when is_list(list), do: Enum.map(list, &ok_value/1)
+
+  def ok_value(%Ecto.Changeset{changes: changes}), do: changes
 
   def ok_value(%{} = map), do: Map.new(map, fn {k, v} -> {k, ok_value(v)} end)
 
@@ -329,14 +356,19 @@ defmodule Resourceful.Error do
 
   Returns a contextual error tuple.
   """
-  def prepend_source({:error, {error, %{source: source} = context}}, prefix),
-    do: {:error, {error, %{context | source: List.wrap(prefix) ++ source}}}
+  def prepend_source({:error, {error, %{source: source} = context}}, prefix) do
+    {:error, {error, %{context | source: List.wrap(prefix) ++ source}}}
+  end
 
-  def prepend_source({:error, {error, %{} = context}}, prefix),
-    do: {:error, {error, context |> Map.put(:source, List.wrap(prefix))}}
+  def prepend_source({:error, {error, %{} = context}}, prefix) do
+    {:error, {error, Map.put(context, :source, List.wrap(prefix))}}
+  end
 
-  def prepend_source(error_or_type, prefix),
-    do: error_or_type |> with_context() |> prepend_source(prefix)
+  def prepend_source(error_or_type, prefix) do
+    error_or_type
+    |> with_context()
+    |> prepend_source(prefix)
+  end
 
   @doc """
   Adds a context map to an error if it lacks one, converting a basic error to a
@@ -351,11 +383,17 @@ defmodule Resourceful.Error do
 
   def with_context(type) when is_atom(type), do: contextual_error(type)
 
-  def with_context(error_or_type, %{} = context),
-    do: error_or_type |> with_context() |> merge_context(context)
+  def with_context(error_or_type, %{} = context) do
+    error_or_type
+    |> with_context()
+    |> merge_context(context)
+  end
 
-  def with_context(error_or_type, key, value),
-    do: error_or_type |> with_context() |> with_context_value(key, value)
+  def with_context(error_or_type, key, value) do
+    error_or_type
+    |> with_context()
+    |> with_context_value(key, value)
+  end
 
   @doc """
   Convenience function to create or modify an existing error with `:input`
@@ -363,8 +401,7 @@ defmodule Resourceful.Error do
 
   Returns a contextual error.
   """
-  def with_input(error_or_type, input),
-    do: error_or_type |> with_context(:input, input)
+  def with_input(error_or_type, input), do: with_context(error_or_type, :input, input)
 
   @doc """
   Convenience function to create or modify an existing error with `:key`
@@ -372,7 +409,7 @@ defmodule Resourceful.Error do
 
   Returns a contextual error.
   """
-  def with_key(error_or_type, key), do: error_or_type |> with_context(:key, key)
+  def with_key(error_or_type, key), do: with_context(error_or_type, :key, key)
 
   @doc """
   Adds source context to an error and replaces `:source` if present.
@@ -386,31 +423,41 @@ defmodule Resourceful.Error do
     |> prepend_source(source)
   end
 
-  defp changeset_error(%{validation: :cast} = context),
-    do: changeset_error(:type_cast_failure, context |> Map.delete(:detail))
+  defp changeset_error(%{validation: :cast} = context) do
+    changeset_error(:type_cast_failure, Map.delete(context, :detail))
+  end
 
-  defp changeset_error(%{} = context),
-    do: changeset_error(:input_validation_failure, context)
+  defp changeset_error(%{} = context) do
+    changeset_error(:input_validation_failure, context)
+  end
 
-  defp changeset_error(type, %{} = context),
-    do: {:error, {type, context |> Map.delete(:validation)}}
+  defp changeset_error(type, %{} = context) do
+    {:error, {type, Map.delete(context, :validation)}}
+  end
 
-  defp changeset_input(source, %{} = data),
-    do: Map.get(data, to_string(source)) || Map.get(data, source)
+  defp changeset_input(source, %{} = data) do
+    Map.get(data, to_string(source)) || Map.get(data, source)
+  end
 
   defp contextual_error(type), do: {:error, {type, %{}}}
 
-  defp default_type_message(path), do: @error_type_defaults |> get_in(path)
+  defp default_type_message(path), do: get_in(@error_type_defaults, path)
 
-  defp flatten_maps(list) when is_list(list), do: list |> Enum.map(&flatten_maps/1)
+  defp flatten_maps(list) when is_list(list), do: Enum.map(list, &flatten_maps/1)
 
-  defp flatten_maps(%{} = map), do: map |> Map.values() |> flatten_maps()
+  defp flatten_maps(%{} = map) do
+    map
+    |> Map.values()
+    |> flatten_maps()
+  end
 
   defp flatten_maps(value), do: value
 
-  defp merge_context({:error, {type, %{} = context}}, new_context),
-    do: {:error, {type, Map.merge(context, new_context)}}
+  defp merge_context({:error, {type, %{} = context}}, new_context) do
+    {:error, {type, Map.merge(context, new_context)}}
+  end
 
-  defp with_context_value({:error, {type, %{} = context}}, key, value),
-    do: {:error, {type, Map.put(context, key, value)}}
+  defp with_context_value({:error, {type, %{} = context}}, key, value) do
+    {:error, {type, Map.put(context, key, value)}}
+  end
 end

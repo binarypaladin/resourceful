@@ -30,7 +30,6 @@ defmodule Resourceful.Collection.Ecto.Filters do
   def not_equal(queryable, col, val), do: where(queryable, [q], field(q, ^col) != ^val)
 
   def starts_with(queryable, col, val) when is_binary(val) do
-    queryable
-    |> where([q], like(field(q, ^col), ^"#{String.replace(val, "%", "\\%")}%"))
+    where(queryable, [q], like(field(q, ^col), ^"#{String.replace(val, "%", "\\%")}%"))
   end
 end

@@ -1,9 +1,9 @@
 defmodule Resourceful.JSONAPI.Error do
   @moduledoc """
   Tools for converting errors formatted in accordance with `Resourceful.Error`
-  into [JSON API-style errors](https://jsonapi.org/format/#errors).
+  into [JSON:API-style errors](https://jsonapi.org/format/#errors).
 
-  JSON API errors have a number of reserved top-level names:
+  JSON:API errors have a number of reserved top-level names:
 
     * `code`
     * `detail`
@@ -14,7 +14,7 @@ defmodule Resourceful.JSONAPI.Error do
     * `status`
     * `title`
 
-  Resourceful errors map to JSON API errors as follows:
+  Resourceful errors map to JSON:API errors as follows:
 
   An error's `type` symbol is converted to a string for `code`. With the
   exception of `meta` and `status` the remainder of keys in an error's `context`
@@ -22,7 +22,7 @@ defmodule Resourceful.JSONAPI.Error do
   the name is not a reserved name, it will be placed in `meta` which, if
   present, will always be a map.
 
-  `status` is a bit of a special case as "status" in a JSON API error always
+  `status` is a bit of a special case as "status" in a JSON:API error always
   refers to an HTTP status code, but it's quite possible many errors might have
   a `status` attribute in their context that has nothing to do with HTTP. As
   such, `:http_status` may be passed either as an option or as a key in a
@@ -46,7 +46,7 @@ defmodule Resourceful.JSONAPI.Error do
 
   @doc """
   Takes a list of errors, or an `:error` tuple with a list as the second
-  element, and converts that list to JSON API errors.
+  element, and converts that list to JSON:API errors.
   """
   def all(errors, opts \\ [])
 
@@ -74,7 +74,7 @@ defmodule Resourceful.JSONAPI.Error do
   def meta({:error, _}, _), do: nil
 
   @doc """
-  Returns a JSON API source map based on the `:source` attribute in a an error's
+  Returns a JSON:API source map based on the `:source` attribute in a an error's
   context map.
   """
   def source(error, source_type \\ @default_source_type)
@@ -88,7 +88,7 @@ defmodule Resourceful.JSONAPI.Error do
   def source({:error, _}, _), do: nil
 
   @doc """
-  Returns a JSON API source map. Either:
+  Returns a JSON:API source map. Either:
     1. `%{"pointer" => "/data/attributes/problem"}`
     2. `%{"parameter" => "fields[resource]"}`
   """
@@ -126,7 +126,7 @@ defmodule Resourceful.JSONAPI.Error do
   def status(_, _), do: nil
 
   @doc """
-  Converts a Resourceful error into a JSON API error map which can then be
+  Converts a Resourceful error into a JSON:API error map which can then be
   converted to JSON. See module overview for details on conventions.
   """
   def to_map(error, opts \\ [])

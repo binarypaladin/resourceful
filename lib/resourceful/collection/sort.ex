@@ -10,7 +10,7 @@ defmodule Resourceful.Collection.Sort do
   alias Resourceful.Collection.Delegate
   alias Resourceful.Error
 
-  @doc ~S"""
+  @doc """
   Returns a data source that is sorted in accordance with `sorters`.
 
   If `data_source` is not an actual list of resources (e.g. an Ecto Queryable)
@@ -37,7 +37,11 @@ defmodule Resourceful.Collection.Sort do
 
   def all(fields) when is_list(fields), do: Enum.map(fields, &cast!/1)
 
-  def all(string) when is_binary(string), do: string |> string_list() |> all()
+  def all(string) when is_binary(string) do
+    string
+    |> string_list()
+    |> all()
+  end
 
   def all(field), do: all([field])
 
@@ -49,7 +53,7 @@ defmodule Resourceful.Collection.Sort do
 
   def cast(sorter) when is_binary(sorter) or is_atom(sorter), do: cast({:asc, sorter})
 
-  def cast(sorter), do: :invalid_sorter |> Error.with_context(%{sorter: sorter})
+  def cast(sorter), do: Error.with_context(:invalid_sorter, %{sorter: sorter})
 
   def cast!(sorter) do
     case cast(sorter) do

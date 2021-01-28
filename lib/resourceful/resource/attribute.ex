@@ -43,6 +43,8 @@ defmodule Resourceful.Resource.Attribute do
 
   def filter(attr, filter), do: attr |> put(:filter?, opt_bool(filter))
 
+  def get(%Attribute{getter: nil, map_to: map_to}, data), do: Map.get(data, map_to)
+
   def get(%Attribute{} = attr, data), do: attr |> attr.getter.(data)
 
   def getter(attr, getter), do: attr |> put(:getter, opt_getter(getter))
@@ -100,7 +102,7 @@ defmodule Resourceful.Resource.Attribute do
   end
 
   defp put(%Attribute{} = attr, key, value) when is_atom(key),
-    do: attr |> Map.put(key, value)
+    do: Map.put(attr, key, value)
 
   defp put_atom(attr, key, value) when is_atom(value), do: put(attr, key, value)
 

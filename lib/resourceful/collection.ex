@@ -18,7 +18,7 @@ defmodule Resourceful.Collection do
 
   @default_pagination_per Application.get_env(:resourceful, :pagination_per, 50)
 
-  @doc ~S"""
+  @doc """
   Returns a all of resources that may be filtered and sorted depending on
   on options. Resources will always be paginated.
 
@@ -41,7 +41,7 @@ defmodule Resourceful.Collection do
     |> paginate(opts)
   end
 
-  @doc ~S"""
+  @doc """
   Checks if `data_source` contains any resources.
 
   Args:
@@ -58,8 +58,11 @@ defmodule Resourceful.Collection do
     Filter.call(data_source, filters) |> delegate_all(opts)
   end
 
-  def paginate(data_source, page, per, opts \\ []) when is_integer(page) and is_integer(per) do
-    Delegate.paginate(data_source, page, per) |> delegate_all(opts)
+  def paginate(data_source, page, per, opts \\ [])
+      when is_integer(page) and is_integer(per) do
+    data_source
+    |> Delegate.paginate(page, per)
+    |> delegate_all(opts)
   end
 
   def paginate(data_source, opts \\ []) do
@@ -72,10 +75,12 @@ defmodule Resourceful.Collection do
   end
 
   def sort(data_source, sorters, opts \\ []) do
-    Sort.call(data_source, sorters) |> delegate_all(opts)
+    data_source
+    |> Sort.call(sorters)
+    |> delegate_all(opts)
   end
 
-  @doc ~S"""
+  @doc """
   Returns the total number of resources in a `data_source`.
 
   Args:
@@ -88,7 +93,7 @@ defmodule Resourceful.Collection do
     Delegate.collection(data_source).total(data_source, opts)
   end
 
-  @doc ~S"""
+  @doc """
   Returns the total number of resources and pages based on `per` in a
   `data_source`.
 

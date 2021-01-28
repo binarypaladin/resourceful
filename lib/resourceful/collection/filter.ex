@@ -36,7 +36,7 @@ defmodule Resourceful.Collection.Filter do
     "sw" => %{func: :starts_with, only: [:string]}
   }
 
-  @doc ~S"""
+  @doc """
   Returns a data source that is filtered in accordance with `filters`.
 
   If `data_source` is not an actual list of resources (e.g. an Ecto Queryable)
@@ -55,7 +55,7 @@ defmodule Resourceful.Collection.Filter do
 
   def call(data_source, filters), do: call(data_source, [filters])
 
-  @doc ~S"""
+  @doc """
   Converts an argument into an appropriate filter parameter. A castd filter
   is a tuple of containing an atom for the field name, an atom of the function
   name that will be called by the deligated module, and the value that will
@@ -78,15 +78,22 @@ defmodule Resourceful.Collection.Filter do
   """
   def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
-  def cast({field_and_op, val}) when is_binary(field_and_op),
-    do: cast(cast_field_and_op(field_and_op) ++ [val])
+  def cast({field_and_op, val}) when is_binary(field_and_op) do
+    field_and_op
+    |> cast_field_and_op()
+    |> Enum.concat([val])
+    |> cast()
+  end
 
   def cast([field_and_op, val]), do: cast({field_and_op, val})
 
-  def cast(filter) when is_list(filter) and length(filter) == 3,
-    do: filter |> List.to_tuple() |> cast()
+  def cast(filter) when is_list(filter) and length(filter) == 3 do
+    filter
+    |> List.to_tuple()
+    |> cast()
+  end
 
-  def cast(filter), do: :invalid_filter |> Error.with_context(%{filter: filter})
+  def cast(filter), do: Error.with_context(:invalid_filter, %{filter: filter})
 
   def cast!(filter) do
     case cast(filter) do
@@ -98,7 +105,7 @@ defmodule Resourceful.Collection.Filter do
     end
   end
 
-  @doc ~S"""
+  @doc """
   Checks whether or not an operator is valid.
 
   ## Args
@@ -108,7 +115,7 @@ defmodule Resourceful.Collection.Filter do
 
   def valid_operator?(op) when is_atom(op), do: valid_operator?(Atom.to_string(op))
 
-  @doc ~S"""
+  @doc """
   Checks whether or not an operator is valid in conjunction with an intended
   value. This can be used to validate the data from a client query.
 
@@ -127,8 +134,11 @@ defmodule Resourceful.Collection.Filter do
     |> Kernel.apply(operator_func!(op), [data_source, field, val])
   end
 
-  defp cast_field_and_op(field_and_op) when is_binary(field_and_op),
-    do: String.split(field_and_op, " ", parts: 2) |> cast_field_and_op()
+  defp cast_field_and_op(field_and_op) when is_binary(field_and_op) do
+    field_and_op
+    |> String.split(" ", parts: 2)
+    |> cast_field_and_op()
+  end
 
   defp cast_field_and_op([field | []]), do: [field, "eq"]
 
@@ -142,11 +152,13 @@ defmodule Resourceful.Collection.Filter do
 
   defp valid_operator_with_type?(nil, _), do: false
 
-  defp valid_operator_with_type?(%{only: only}, val) when is_binary(val),
-    do: Enum.member?(only, :string)
+  defp valid_operator_with_type?(%{only: only}, val) when is_binary(val) do
+    Enum.member?(only, :string)
+  end
 
-  defp valid_operator_with_type?(%{only: only}, val) when is_list(val),
-    do: Enum.member?(only, :list)
+  defp valid_operator_with_type?(%{only: only}, val) when is_list(val) do
+    Enum.member?(only, :list)
+  end
 
   defp valid_operator_with_type?(%{only: _}, _), do: false
 
