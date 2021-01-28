@@ -80,8 +80,6 @@ defmodule Resourceful.Resource.Attribute do
 
   defp as_atom(value) when is_binary(value), do: String.to_existing_atom(value)
 
-  defp default_getter(attr, data), do: data |> Map.fetch!(attr.map_to)
-
   defp opt_bool(nil), do: false
 
   defp opt_bool(bool) when is_boolean(bool), do: bool
@@ -90,7 +88,7 @@ defmodule Resourceful.Resource.Attribute do
 
   defp opt_name(name) when is_binary(name), do: name
 
-  defp opt_getter(nil), do: &default_getter/2
+  defp opt_getter(nil), do: nil
 
   defp opt_getter(func) when is_function(func, 2), do: func
 
