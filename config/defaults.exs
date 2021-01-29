@@ -2,7 +2,8 @@ import Config
 
 config :resourceful, :error_type_defaults, %{
   attribute_not_found: %{
-    detail: "An attribute with the name `%{key}` could not be found for resource type `%{type}`.",
+    detail:
+      "An attribute with the name `%{key}` could not be found for resource type `%{resource_type}`.",
     title: "Attribute Could Not Be Found"
   },
   cannot_filter_by_attribute: %{
