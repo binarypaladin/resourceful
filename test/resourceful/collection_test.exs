@@ -26,8 +26,13 @@ defmodule Resourceful.CollectionTest do
 
     ids = [12, 10]
 
-    assert Fixtures.albums() |> Collection.all(opts) |> ids() == ids
-    assert Fixtures.albums_query() |> Collection.all(opts) |> all_by(:id) == ids
+    assert Fixtures.albums()
+           |> Collection.all(opts)
+           |> ids() == ids
+
+    assert Fixtures.albums_query()
+           |> Collection.all(opts)
+           |> all_by(:id) == ids
   end
 
   test "filter/3" do
@@ -48,8 +53,13 @@ defmodule Resourceful.CollectionTest do
   test "paginates a list" do
     ids = [4, 5, 6]
 
-    assert Fixtures.albums() |> Collection.paginate(2, 3) |> ids() == ids
-    assert Fixtures.albums_query() |> Collection.paginate(2, 3, @opts) |> all_by(:id) == ids
+    assert Fixtures.albums()
+           |> Collection.paginate(2, 3)
+           |> ids() == ids
+
+    assert Fixtures.albums_query()
+           |> Collection.paginate(2, 3, @opts)
+           |> all_by(:id) == ids
   end
 
   test "sorts a list" do
@@ -70,14 +80,14 @@ defmodule Resourceful.CollectionTest do
   test "gets total" do
     total = 15
 
-    assert Fixtures.albums() |> Collection.total() == total
-    assert Fixtures.albums_query() |> Collection.total(@opts) == total
+    assert Collection.total(Fixtures.albums()) == total
+    assert Collection.total(Fixtures.albums_query(), @opts) == total
   end
 
   test "gets totals with pagination info" do
     totals = %{pages: 5, resources: 15}
 
-    assert Fixtures.albums() |> Collection.totals(per: 3) == totals
-    assert Fixtures.albums_query() |> Collection.totals(@opts ++ [per: 3]) == totals
+    assert Collection.totals(Fixtures.albums(), per: 3) == totals
+    assert Collection.totals(Fixtures.albums_query(), @opts ++ [per: 3]) == totals
   end
 end

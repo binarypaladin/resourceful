@@ -55,7 +55,9 @@ defmodule Resourceful.Collection do
   end
 
   def filter(data_source, filters, opts \\ []) do
-    Filter.call(data_source, filters) |> delegate_all(opts)
+    data_source
+    |> Filter.call(filters)
+    |> delegate_all(opts)
   end
 
   def paginate(data_source, page, per, opts \\ [])

@@ -12,7 +12,9 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "equals" do
-    assert Album |> Filters.equal(:artist, "Queen") |> ids() == [5]
+    assert Album
+           |> Filters.equal(:artist, "Queen")
+           |> ids() == [5]
   end
 
   test "exclude" do
@@ -26,7 +28,9 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "greater than" do
-    assert Album |> Filters.greater_than(:tracks, 12) |> ids() == [12]
+    assert Album
+           |> Filters.greater_than(:tracks, 12)
+           |> ids() == [12]
 
     assert Album
            |> Filters.greater_than(:release_date, ~D[2000-01-01])
@@ -34,7 +38,9 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "greater than or equal" do
-    assert Album |> Filters.greater_than_or_equal(:tracks, 12) |> ids() == [6, 12, 14]
+    assert Album
+           |> Filters.greater_than_or_equal(:tracks, 12)
+           |> ids() == [6, 12, 14]
 
     assert Album
            |> Filters.greater_than_or_equal(:release_date, ~D[2015-09-11])
@@ -52,12 +58,19 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "less than" do
-    assert Album |> Filters.less_than(:tracks, 8) |> ids() == [11, 13]
-    assert Album |> Filters.less_than(:release_date, ~D[1973-01-01]) |> ids() == [1, 15]
+    assert Album
+           |> Filters.less_than(:tracks, 8)
+           |> ids() == [11, 13]
+
+    assert Album
+           |> Filters.less_than(:release_date, ~D[1973-01-01])
+           |> ids() == [1, 15]
   end
 
   test "less than or equal" do
-    assert Album |> Filters.less_than_or_equal(:tracks, 8) |> ids() == [9, 11, 13]
+    assert Album
+           |> Filters.less_than_or_equal(:tracks, 8)
+           |> ids() == [9, 11, 13]
 
     assert Album
            |> Filters.less_than_or_equal(:release_date, ~D[1976-01-23])
@@ -71,6 +84,8 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "starts with" do
-    assert Album |> Filters.starts_with(:artist, "Warr") |> ids() == [2]
+    assert Album
+           |> Filters.starts_with(:artist, "Warr")
+           |> ids() == [2]
   end
 end

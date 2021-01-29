@@ -105,7 +105,7 @@ defmodule Resourceful.Error do
     |> list()
   end
 
-  def all(value, opts), do: [value] |> all([auto_source: false] ++ opts)
+  def all(value, opts), do: all([value], Keyword.put(opts, :auto_source, false))
 
   @doc """
   Recursively checks arbitrary data structures for any basic or contextual
@@ -249,7 +249,7 @@ defmodule Resourceful.Error do
       |> Enum.reduce(context, fn key, new_ctx ->
         case Map.get(context, key) || default_type_message([type, key]) do
           nil -> new_ctx
-          msg -> new_ctx |> Map.put(key, message_with_context(msg, context))
+          msg -> Map.put(new_ctx, key, message_with_context(msg, context))
         end
       end)}}
   end

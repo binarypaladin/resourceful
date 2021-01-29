@@ -37,7 +37,9 @@ defmodule Resourceful.ErrorTest do
     assert Error.all(@data_with_errors) == Error.list(@data_with_errors)
 
     assert Error.all(@data_with_errors, auto_source: true) ==
-             @data_with_errors |> Error.auto_source() |> Error.list()
+             @data_with_errors
+             |> Error.auto_source()
+             |> Error.list()
 
     assert Error.all({:error, :err_1}) == [error: :err_1]
     assert Error.all({:error, :err_1}, auto_source: true) == [error: :err_1]
@@ -87,16 +89,16 @@ defmodule Resourceful.ErrorTest do
   test "context/2" do
     context = %{input: "x"}
 
-    assert {:error, {:invalid, context}} |> Error.context() == context
-    assert {:error, :invalid} |> Error.context() == %{}
-    assert context |> Error.context() == context
+    assert Error.context({:error, {:invalid, context}}) == context
+    assert Error.context({:error, :invalid}) == %{}
+    assert Error.context(context) == context
   end
 
   test "delete_context_key/2" do
     error = {:error, {:invalid, %{input: "x"}}}
 
-    assert error |> Error.delete_context_key(:source) == error
-    assert error |> Error.delete_context_key(:input) == {:error, {:invalid, %{}}}
+    assert Error.delete_context_key(error, :source) == error
+    assert Error.delete_context_key(error, :input) == {:error, {:invalid, %{}}}
   end
 
   test "from_changeset/1" do
@@ -112,7 +114,7 @@ defmodule Resourceful.ErrorTest do
 
     errors = change.(%{"number" => "0", "size" => "a"})
 
-    assert errors |> Error.from_changeset() ==
+    assert Error.from_changeset(errors) ==
              [
                error: {
                  :input_validation_failure,
@@ -134,7 +136,7 @@ defmodule Resourceful.ErrorTest do
   test "humanize/2" do
     error = {:error, {:type_cast_failure, %{input: "x", type: :date}}}
 
-    assert error |> Error.humanize() ==
+    assert Error.humanize(error) ==
              {:error,
               {:type_cast_failure,
                %{
@@ -144,9 +146,9 @@ defmodule Resourceful.ErrorTest do
                  type: :date
                }}}
 
-    error = error |> Error.with_context(%{detail: "`%{input}` isn't a %{type}", title: "Fail"})
+    error = Error.with_context(error, %{detail: "`%{input}` isn't a %{type}", title: "Fail"})
 
-    assert error |> Error.humanize() ==
+    assert Error.humanize(error) ==
              {:error,
               {:type_cast_failure,
                %{detail: "`x` isn't a date", input: "x", title: "Fail", type: :date}}}
@@ -170,10 +172,10 @@ defmodule Resourceful.ErrorTest do
   test "message_with_context/2" do
     message = "Hello, my name is %{name}."
 
-    assert message |> Error.message_with_context(%{name: "Inigo Montoya"}) ==
+    assert Error.message_with_context(message, %{name: "Inigo Montoya"}) ==
              "Hello, my name is Inigo Montoya."
 
-    assert message |> Error.message_with_context(%{"name" => "Rupert"}) ==
+    assert Error.message_with_context(message, %{"name" => "Rupert"}) ==
              "Hello, my name is ."
   end
 
@@ -198,59 +200,58 @@ defmodule Resourceful.ErrorTest do
   end
 
   test "prepend_source/2" do
-    assert :type |> Error.prepend_source([:key]) ==
+    assert Error.prepend_source(:type, [:key]) ==
              {:error, {:type, %{source: [:key]}}}
 
-    assert {:error, :type} |> Error.prepend_source([:key]) ==
+    assert Error.prepend_source({:error, :type}, [:key]) ==
              {:error, {:type, %{source: [:key]}}}
 
-    assert {:error, {:type, %{source: ["k2"]}}}
-           |> Error.prepend_source("k1") ==
+    assert Error.prepend_source({:error, {:type, %{source: ["k2"]}}}, "k1") ==
              {:error, {:type, %{source: ["k1", "k2"]}}}
   end
 
   test "with_context/1" do
-    assert :type |> Error.with_context() == {:error, {:type, %{}}}
+    assert Error.with_context(:type) == {:error, {:type, %{}}}
 
-    assert {:error, :type} |> Error.with_context() == {:error, {:type, %{}}}
+    assert Error.with_context({:error, :type}) == {:error, {:type, %{}}}
 
-    assert {:error, {:type, %{input: "abc"}}} |> Error.with_context() ==
+    assert Error.with_context({:error, {:type, %{input: "abc"}}}) ==
              {:error, {:type, %{input: "abc"}}}
   end
 
   test "with_context/2" do
-    assert {:error, :type} |> Error.with_context(%{key: "value"}) ==
+    assert Error.with_context({:error, :type}, %{key: "value"}) ==
              {:error, {:type, %{key: "value"}}}
 
-    assert {:error, {:type, %{k1: "v1"}}} |> Error.with_context(%{k2: "v2"}) ==
+    assert Error.with_context({:error, {:type, %{k1: "v1"}}}, %{k2: "v2"}) ==
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
   test "with_context/3" do
-    assert {:error, :type} |> Error.with_context(:key, "value") ==
+    assert Error.with_context({:error, :type}, :key, "value") ==
              {:error, {:type, %{key: "value"}}}
 
-    assert {:error, {:type, %{k1: "v1"}}} |> Error.with_context(:k2, "v2") ==
+    assert Error.with_context({:error, {:type, %{k1: "v1"}}}, :k2, "v2") ==
              {:error, {:type, %{k1: "v1", k2: "v2"}}}
   end
 
   test "with_input/2" do
-    assert :type |> Error.with_input("input") ==
+    assert Error.with_input(:type, "input") ==
              {:error, {:type, %{input: "input"}}}
   end
 
   test "with_key/2" do
-    assert :type |> Error.with_key("key") == {:error, {:type, %{key: "key"}}}
+    assert Error.with_key(:type, "key") == {:error, {:type, %{key: "key"}}}
   end
 
   test "with_source/3" do
-    assert :type |> Error.with_source(:key, %{input: "x"}) ==
+    assert Error.with_source(:type, :key, %{input: "x"}) ==
              {:error, {:type, %{input: "x", source: [:key]}}}
 
-    assert {:error, :type} |> Error.with_source(:key) ==
+    assert Error.with_source({:error, :type}, :key) ==
              {:error, {:type, %{source: [:key]}}}
 
-    assert {:error, {:type, %{source: ["k2"]}}} |> Error.with_source("k1") ==
+    assert Error.with_source({:error, {:type, %{source: ["k2"]}}}, "k1") ==
              {:error, {:type, %{source: ["k1"]}}}
   end
 end

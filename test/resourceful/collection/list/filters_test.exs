@@ -7,7 +7,9 @@ defmodule Resourceful.Collection.List.FiltersTest do
   import Resourceful.Test.Helpers
 
   test "equals" do
-    assert Fixtures.albums() |> Filters.equal("artist", "Queen") |> ids() == [5]
+    assert Fixtures.albums()
+           |> Filters.equal("artist", "Queen")
+           |> ids() == [5]
   end
 
   test "exclude" do
@@ -21,7 +23,9 @@ defmodule Resourceful.Collection.List.FiltersTest do
   end
 
   test "greater than" do
-    assert Fixtures.albums() |> Filters.greater_than("tracks", 12) |> ids() == [12]
+    assert Fixtures.albums()
+           |> Filters.greater_than("tracks", 12)
+           |> ids() == [12]
 
     assert Fixtures.albums()
            |> Filters.greater_than("release_date", ~D[2000-01-01])
@@ -49,7 +53,9 @@ defmodule Resourceful.Collection.List.FiltersTest do
   end
 
   test "less than" do
-    assert Fixtures.albums() |> Filters.less_than("tracks", 8) |> ids() == [11, 13]
+    assert Fixtures.albums()
+           |> Filters.less_than("tracks", 8)
+           |> ids() == [11, 13]
 
     assert Fixtures.albums()
            |> Filters.less_than("release_date", ~D[1973-01-01])
@@ -57,7 +63,9 @@ defmodule Resourceful.Collection.List.FiltersTest do
   end
 
   test "less than or equal" do
-    assert Fixtures.albums() |> Filters.less_than_or_equal("tracks", 8) |> ids() == [9, 11, 13]
+    assert Fixtures.albums()
+           |> Filters.less_than_or_equal("tracks", 8)
+           |> ids() == [9, 11, 13]
 
     assert Fixtures.albums()
            |> Filters.less_than_or_equal("release_date", ~D[1976-01-23])
@@ -71,6 +79,8 @@ defmodule Resourceful.Collection.List.FiltersTest do
   end
 
   test "starts with" do
-    assert Fixtures.albums() |> Filters.starts_with("artist", "Warr") |> ids() == [2]
+    assert Fixtures.albums()
+           |> Filters.starts_with("artist", "Warr")
+           |> ids() == [2]
   end
 end

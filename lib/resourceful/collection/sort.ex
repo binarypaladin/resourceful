@@ -65,5 +65,5 @@ defmodule Resourceful.Collection.Sort do
     end
   end
 
-  def string_list(string) when is_binary(string), do: string |> String.split(~r/, */)
+  def string_list(string) when is_binary(string), do: String.split(string, ~r/, */)
 end

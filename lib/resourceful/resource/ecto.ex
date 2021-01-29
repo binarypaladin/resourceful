@@ -10,7 +10,7 @@ defmodule Resourceful.Resource.Ecto do
     Attribute.new(
       transform_name(field_name, Keyword.get(opts, :transform_names)),
       schema.__schema__(:type, field_name),
-      [map_to: field_name] ++ opts
+      Keyword.put(opts, :map_to, field_name)
     )
   end
 
@@ -22,10 +22,9 @@ defmodule Resourceful.Resource.Ecto do
   end
 
   defp attr_opts(attr_name, opts) do
-    Enum.map(
-      [:filter, :query, :sort],
-      &{&1, in_opt_list?(opts, &1, attr_name)}
-    ) ++ opts
+    Enum.map([:filter, :query, :sort], fn opt ->
+      {opt, in_opt_list?(opts, opt, attr_name)}
+    end) ++ opts
   end
 
   defp check_opt_fields!(opt_fields, fields) do
@@ -34,7 +33,11 @@ defmodule Resourceful.Resource.Ecto do
         opt_fields
 
       not_included ->
-        error_fields = not_included |> Enum.map(&to_string/1) |> Enum.join(", ")
+        error_fields =
+          not_included
+          |> Stream.map(&to_string/1)
+          |> Enum.join(", ")
+
         raise InvalidSchemaFieldError, message: "Fields not included in schema: #{error_fields}"
     end
   end
@@ -46,9 +49,16 @@ defmodule Resourceful.Resource.Ecto do
     if except && only, do: raise(ArgumentError, message: ":except cannot be used with :only")
 
     cond do
-      only -> only |> check_opt_fields!(fields)
-      except -> except |> check_opt_fields!(fields) |> fields_except(fields)
-      true -> fields
+      only ->
+        check_opt_fields!(only, fields)
+
+      except ->
+        except
+        |> check_opt_fields!(fields)
+        |> fields_except(fields)
+
+      true ->
+        fields
     end
   end
 
@@ -58,23 +68,30 @@ defmodule Resourceful.Resource.Ecto do
 
   defp expand_all_opt(opt, _), do: opt
 
-  defp expand_all_opts(fields, opts), do: opts |> Enum.map(&expand_all_opt(&1, fields))
+  defp expand_all_opts(fields, opts), do: Enum.map(opts, &expand_all_opt(&1, fields))
 
   defp fields_except(except, fields), do: fields -- except
 
-  defp in_opt_list?(opts, key, attr), do: Keyword.get(opts, key, []) |> Enum.member?(attr)
+  defp in_opt_list?(opts, key, attr) do
+    opts
+    |> Keyword.get(key, [])
+    |> Enum.member?(attr)
+  end
 
   defp resource_opts(schema, opts) do
-    fields = schema.__schema__(:fields) |> except_or_only(opts)
-    opts = fields |> expand_all_opts(opts)
+    fields = except_or_only(schema.__schema__(:fields), opts)
+    opts = expand_all_opts(fields, opts)
 
     [
-      attributes: fields |> Enum.map(&attribute(schema, &1, attr_opts(&1, opts))),
+      attributes:
+        Enum.map(fields, fn field ->
+          attribute(schema, field, attr_opts(field, opts))
+        end),
       id: Keyword.get(opts, :id, schema.__schema__(:primary_key))
     ] ++ opts
   end
 
-  defp transform_name(field_name, nil), do: Kernel.to_string(field_name)
+  defp transform_name(field_name, nil), do: to_string(field_name)
 
   defp transform_name(field_name, func) when is_function(func, 1), do: func.(field_name)
 end

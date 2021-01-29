@@ -10,6 +10,6 @@ defmodule Resourceful.Test.Album do
   end
 
   def create_changeset(album, attrs) do
-    album |> cast(attrs, [:id, :artist, :release_date, :title, :tracks])
+    cast(album, attrs, [:id, :artist, :release_date, :title, :tracks])
   end
 end

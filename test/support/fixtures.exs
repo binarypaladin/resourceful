@@ -111,10 +111,14 @@ defmodule Resourceful.Test.Fixtures do
     ]
   end
 
-  def albums_query(), do: Album |> Ecto.Queryable.to_query()
+  def albums_query(), do: Ecto.Queryable.to_query(Album)
 
   def seed_database() do
-    albums() |> Enum.map(&(%Album{} |> Album.create_changeset(&1) |> Repo.insert()))
+    Enum.map(albums(), fn album_map ->
+      %Album{}
+      |> Album.create_changeset(album_map)
+      |> Repo.insert()
+    end)
   end
 
   def sorters(), do: [asc: "artist", desc: "tracks", asc: "title"]

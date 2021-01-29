@@ -51,7 +51,7 @@ defmodule Resourceful.Collection.Filter do
   def call(data_source, []), do: data_source
 
   def call(data_source, filters) when is_list(filters),
-    do: filters |> Enum.reduce(data_source, &apply_filter!(&2, &1))
+    do: Enum.reduce(filters, data_source, &apply_filter!(&2, &1))
 
   def call(data_source, filters), do: call(data_source, [filters])
 

@@ -17,7 +17,7 @@ defmodule Resourceful.Resource.EctoTest do
   test "resource/2" do
     resource = Ecto.resource(Album, transform_names: &Inflex.camelize(&1, :lower))
 
-    assert resource.attributes |> Map.keys() ==
+    assert Map.keys(resource.attributes) ==
              ["artist", "id", "releaseDate", "title", "tracks"]
 
     assert resource.attributes

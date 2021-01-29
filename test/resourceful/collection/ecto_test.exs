@@ -14,18 +14,18 @@ defmodule Resourceful.Collection.EctoTest do
   end
 
   test "all" do
-    assert Album |> Collection.Ecto.all(@opts) == Album |> Repo.all()
+    assert Collection.Ecto.all(Album, @opts) == Repo.all(Album)
   end
 
   test "any?" do
-    assert Album |> Collection.Ecto.any?(@opts) == true
+    assert Collection.Ecto.any?(Album, @opts) == true
 
-    Album |> Repo.delete_all()
+    Repo.delete_all(Album)
 
-    assert Album |> Collection.Ecto.any?(@opts) == false
+    assert Collection.Ecto.any?(Album, @opts) == false
   end
 
   test "total" do
-    assert Album |> Collection.Ecto.total(@opts) == length(Fixtures.albums())
+    assert Collection.Ecto.total(Album, @opts) == length(Fixtures.albums())
   end
 end

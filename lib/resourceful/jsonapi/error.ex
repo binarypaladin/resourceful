@@ -53,7 +53,7 @@ defmodule Resourceful.JSONAPI.Error do
   def all({:error, errors}, opts), do: all(errors, opts)
 
   def all(errors, opts) when is_list(errors),
-    do: errors |> Enum.map(&to_map(&1, opts))
+    do: Enum.map(errors, &to_map(&1, opts))
 
   @doc """
   Returns a map of all non-reserved attributes from a context map.
@@ -63,7 +63,10 @@ defmodule Resourceful.JSONAPI.Error do
   def meta({:error, {_, %{} = context}}, opts), do: meta(context, opts)
 
   def meta(%{} = context, _) do
-    meta = context |> Map.drop(@reserved_names) |> stringify_keys()
+    meta =
+      context
+      |> Map.drop(@reserved_names)
+      |> stringify_keys()
 
     case Enum.any?(meta) do
       true -> meta
@@ -83,7 +86,7 @@ defmodule Resourceful.JSONAPI.Error do
     do: source(error, Keyword.get(opts, :source_type, @default_source_type))
 
   def source({:error, {_, %{source: source}}}, source_type),
-    do: %{source_type => source |> source_string(source_type)}
+    do: %{source_type => source_string(source, source_type)}
 
   def source({:error, _}, _), do: nil
 
@@ -93,11 +96,11 @@ defmodule Resourceful.JSONAPI.Error do
     2. `%{"parameter" => "fields[resource]"}`
   """
   def source_string(source, source_type) when is_list(source) do
-    str_sources = source |> Enum.map(&to_string/1)
+    str_sources = Enum.map(source, &to_string/1)
 
     case source_type do
-      "parameter" -> str_sources |> parameter_source()
-      "pointer" -> str_sources |> pointer_source()
+      "parameter" -> parameter_source(str_sources)
+      "pointer" -> pointer_source(str_sources)
     end
   end
 
@@ -111,7 +114,7 @@ defmodule Resourceful.JSONAPI.Error do
   """
   def status(error, opts \\ [])
 
-  def status({:error, {_, %{http_status: status}}}, _), do: status |> to_string()
+  def status({:error, {_, %{http_status: status}}}, _), do: to_string(status)
 
   def status({:error, {type, _}}, opts), do: status(type, opts)
 
@@ -132,19 +135,21 @@ defmodule Resourceful.JSONAPI.Error do
   def to_map(error, opts \\ [])
 
   def to_map({:error, {_, %{}}} = error, opts) do
-    [:meta, :source, :status]
-    |> Enum.reduce(base_error(error, opts), fn key, jerr ->
+    Enum.reduce([:meta, :source, :status], base_error(error, opts), fn key, jerr ->
       apply_jsonapi_error_key(jerr, key, error, opts)
     end)
   end
 
-  def to_map({:error, _} = error, opts),
-    do: error |> Resourceful.Error.with_context() |> to_map(opts)
+  def to_map({:error, _} = error, opts) do
+    error
+    |> Resourceful.Error.with_context()
+    |> to_map(opts)
+  end
 
   defp apply_jsonapi_error_key(jsonapi_error, key, {:error, _} = error, opts) do
     case apply(__MODULE__, key, [error, opts]) do
       nil -> jsonapi_error
-      value -> jsonapi_error |> Map.put(to_string(key), value)
+      value -> Map.put(jsonapi_error, to_string(key), value)
     end
   end
 
@@ -160,20 +165,16 @@ defmodule Resourceful.JSONAPI.Error do
   defp parameter_source([]), do: nil
 
   defp parameter_source(source) do
-    Enum.reduce(
-      source |> tl(),
-      source |> hd(),
-      fn src, str -> "#{str}[#{src}]" end
-    )
+    Enum.reduce(tl(source), hd(source), fn src, str -> "#{str}[#{src}]" end)
   end
 
   defp pointer_source([]), do: ""
 
   defp pointer_source(source), do: "/#{Enum.join(source, "/")}"
 
-  defp stringify_keys(map), do: map |> Map.new(fn {k, v} -> {to_string(k), v} end)
+  defp stringify_keys(map), do: Map.new(map, fn {k, v} -> {to_string(k), v} end)
 
   defp to_status(nil), do: nil
 
-  defp to_status(status), do: status |> to_string()
+  defp to_status(status), do: to_string(status)
 end
