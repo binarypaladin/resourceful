@@ -20,24 +20,34 @@ defmodule Resourceful.Resource.EctoTest do
     assert resource.attributes |> Map.keys() ==
              ["artist", "id", "releaseDate", "title", "tracks"]
 
-    assert resource.attributes |> Map.values() |> Enum.all?(& &1.filter?) == false
-    assert resource.attributes |> Map.values() |> Enum.all?(& &1.sort?) == false
+    assert resource.attributes
+           |> Map.values()
+           |> Enum.all?(& &1.filter?) == false
+
+    assert resource.attributes
+           |> Map.values()
+           |> Enum.all?(& &1.sort?) == false
 
     resource = Ecto.resource(Album, query: :all)
 
-    assert resource.attributes |> Map.values() |> Enum.all?(& &1.filter?) == true
-    assert resource.attributes |> Map.values() |> Enum.all?(& &1.sort?) == true
+    assert resource.attributes
+           |> Map.values()
+           |> Enum.all?(& &1.filter?) == true
+
+    assert resource.attributes
+           |> Map.values()
+           |> Enum.all?(& &1.sort?) == true
 
     resource = Ecto.resource(Album, only: [:id, :artist], filter: [:artist], sort: [:id])
 
-    assert Resource.attribute!(resource, "artist").filter? == true
-    assert Resource.attribute!(resource, "artist").sort? == false
-    assert Resource.attribute!(resource, "id").filter? == false
-    assert Resource.attribute!(resource, "id").sort? == true
-    assert resource.attributes |> Map.keys() == ["artist", "id"]
+    assert Resource.get_attribute(resource, "artist").filter? == true
+    assert Resource.get_attribute(resource, "artist").sort? == false
+    assert Resource.get_attribute(resource, "id").filter? == false
+    assert Resource.get_attribute(resource, "id").sort? == true
+    assert Map.keys(resource.attributes) == ["artist", "id"]
 
     resource = Ecto.resource(Album, except: [:tracks])
     assert map_size(resource.attributes) == 4
-    assert resource.attributes |> Map.has_key?("tracks") == false
+    assert Map.has_key?(resource.attributes, "tracks") == false
   end
 end

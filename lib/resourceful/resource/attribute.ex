@@ -3,6 +3,8 @@ defmodule Resourceful.Resource.Attribute do
   alias Resourceful.Error
   alias Resourceful.Collection.Filter
 
+  import Map, only: [put: 3]
+
   @enforce_keys [
     :filter?,
     :getter,
@@ -33,31 +35,38 @@ defmodule Resourceful.Resource.Attribute do
         ok
 
       _ ->
-        :type_cast_failure
-        |> Error.with_context(%{attribute: name, input: input, type: type})
+        Error.with_context(
+          :type_cast_failure,
+          %{attribute: name, input: input, type: type}
+        )
     end
   end
 
-  def error(%Attribute{name: name}, type, context \\ %{}),
-    do: type |> Error.with_context(Map.merge(context, %{attribute: name}))
+  def error(%Attribute{name: name}, type, context \\ %{}) do
+    Error.with_context(type, Map.merge(context, %{attribute: name}))
+  end
 
-  def filter(attr, filter), do: attr |> put(:filter?, opt_bool(filter))
+  def filter(attr, filter), do: put(attr, :filter?, opt_bool(filter))
 
-  def get(%Attribute{getter: nil, map_to: map_to}, data), do: Map.get(data, map_to)
+  def getter(attr, getter), do: put(attr, :getter, opt_getter(getter))
 
-  def get(%Attribute{} = attr, data), do: attr |> attr.getter.(data)
+  def map_to(attr, map_to), do: put(attr, :map_to, map_to)
 
-  def getter(attr, getter), do: attr |> put(:getter, opt_getter(getter))
+  def map_value(%Attribute{getter: nil, map_to: map_to}, data), do: Map.get(data, map_to)
 
-  def map_to(attr, map_to), do: attr |> put(:map_to, map_to)
+  def map_value(%Attribute{} = attr, data), do: attr.getter.(attr, data)
 
-  def name(attr, name), do: attr |> put(:name, opt_name(name))
+  def name(attr, name), do: put(attr, :name, opt_name(name))
 
-  def query(attr, query), do: attr |> filter(query) |> sort(query)
+  def query(attr, query) do
+    attr
+    |> filter(query)
+    |> sort(query)
+  end
 
-  def sort(attr, sort), do: attr |> put(:sort?, opt_bool(sort))
+  def sort(attr, sort), do: put(attr, :sort?, opt_bool(sort))
 
-  def type(attr, type), do: attr |> put_atom(:type, type)
+  def type(attr, type), do: put_atom(attr, :type, type)
 
   def validate_filter(%Attribute{filter?: true} = attr, op, val) do
     with {:ok, cast_val} <- cast(attr, val),
@@ -65,16 +74,19 @@ defmodule Resourceful.Resource.Attribute do
          do: ok
   end
 
-  def validate_filter(%Attribute{} = attr, _, _),
-    do: error(attr, :cannot_filter_by_attribute)
+  def validate_filter(%Attribute{} = attr, _, _) do
+    error(attr, :cannot_filter_by_attribute)
+  end
 
   def validate_sorter(attr, order \\ :asc)
 
-  def validate_sorter(%Attribute{map_to: map_to, sort?: true}, order),
-    do: {:ok, {order, map_to}}
+  def validate_sorter(%Attribute{map_to: map_to, sort?: true}, order) do
+    {:ok, {order, map_to}}
+  end
 
-  def validate_sorter(%Attribute{} = attr, _),
-    do: error(attr, :cannot_sort_by_attribute)
+  def validate_sorter(%Attribute{} = attr, _) do
+    error(attr, :cannot_sort_by_attribute)
+  end
 
   defp as_atom(value) when is_atom(value), do: value
 
@@ -84,7 +96,7 @@ defmodule Resourceful.Resource.Attribute do
 
   defp opt_bool(bool) when is_boolean(bool), do: bool
 
-  defp opt_name(name) when is_atom(name), do: Kernel.to_string(name)
+  defp opt_name(name) when is_atom(name), do: to_string(name)
 
   defp opt_name(name) when is_binary(name), do: name
 
@@ -98,9 +110,6 @@ defmodule Resourceful.Resource.Attribute do
       true -> opts
     end
   end
-
-  defp put(%Attribute{} = attr, key, value) when is_atom(key),
-    do: Map.put(attr, key, value)
 
   defp put_atom(attr, key, value) when is_atom(value), do: put(attr, key, value)
 

@@ -15,7 +15,7 @@ defmodule Resourceful.Resource.AttributeTest do
     assert attr.name == "artist"
     assert attr.sort? == false
     assert attr.type == :string
-    assert attr |> Attribute.get(@data) == "David Bowie"
+    assert Attribute.map_value(attr, @data) == "David Bowie"
   end
 
   test "new/3 with keywords" do
@@ -32,7 +32,7 @@ defmodule Resourceful.Resource.AttributeTest do
     assert attr.map_to == :artist
     assert attr.name == "name"
     assert attr.sort? == true
-    assert attr |> Attribute.get(@data) == "David Bowie"
+    assert Attribute.map_value(attr, @data) == "David Bowie"
   end
 
   test "cast/2" do
@@ -44,18 +44,18 @@ defmodule Resourceful.Resource.AttributeTest do
   end
 
   test "error/2" do
-    assert attr() |> Attribute.error(:err) ==
+    assert Attribute.error(attr(), :err) ==
              {:error, {:err, %{attribute: "artist"}}}
 
-    assert attr() |> Attribute.error(:not_musician, %{input: "Harrison Ford"}) ==
+    assert Attribute.error(attr(), :not_musician, %{input: "Harrison Ford"}) ==
              {:error, {:not_musician, %{attribute: "artist", input: "Harrison Ford"}}}
   end
 
   test "filter/2" do
-    attr = attr() |> Attribute.filter(true)
+    attr = Attribute.filter(attr(), true)
     assert attr.filter? == true
 
-    attr = attr |> Attribute.filter(nil)
+    attr = Attribute.filter(attr, nil)
     assert attr.filter? == false
   end
 
@@ -66,50 +66,53 @@ defmodule Resourceful.Resource.AttributeTest do
       |> String.upcase()
     end
 
-    attr = attr() |> Attribute.getter(func)
-    assert attr |> Attribute.get(@data) == "DAVID BOWIE"
-    assert attr |> Attribute.get(%{}) == "UNDEFINED ARTIST"
+    attr = Attribute.getter(attr(), func)
+    assert Attribute.map_value(attr, @data) == "DAVID BOWIE"
+    assert Attribute.map_value(attr, %{}) == "UNDEFINED ARTIST"
   end
 
   test "map_to/2" do
-    attr = attr() |> Attribute.map_to("artist")
+    attr = Attribute.map_to(attr(), "artist")
     data = %{"artist" => "Duran Duran"}
 
     assert attr.map_to == "artist"
-    assert attr |> Attribute.get(data) == "Duran Duran"
+    assert Attribute.map_value(attr, data) == "Duran Duran"
   end
 
   test "name/2" do
-    attr = attr() |> Attribute.name(:artist_name)
+    attr = Attribute.name(attr(), :artist_name)
     assert attr.name == "artist_name"
   end
 
   test "query/2" do
-    attr = attr() |> Attribute.query(true)
+    attr = Attribute.query(attr(), true)
     assert attr.filter? == true
     assert attr.sort? == true
   end
 
   test "sort/2" do
-    attr = attr() |> Attribute.sort(true)
+    attr = Attribute.sort(attr(), true)
     assert attr.sort? == true
 
-    attr = attr |> Attribute.sort(nil)
+    attr = Attribute.sort(attr, nil)
     assert attr.sort? == false
   end
 
   test "type/2" do
-    attr = attr() |> Attribute.type(:text)
+    attr = Attribute.type(attr(), :text)
     assert attr.type == :text
   end
 
   test "validate_filter/3" do
-    attr = Resourceful.Resource.Ecto.attribute(Album, :tracks) |> Attribute.filter(false)
+    attr =
+      Album
+      |> Resourceful.Resource.Ecto.attribute(:tracks)
+      |> Map.put(:filter?, false)
 
     assert Attribute.validate_filter(attr, "gte", "3") ==
              {:error, {:cannot_filter_by_attribute, %{attribute: "tracks"}}}
 
-    attr = attr |> Attribute.filter(true)
+    attr = %{attr | filter?: true}
 
     assert Attribute.validate_filter(attr, "gte", "3") == {:ok, {:tracks, "gte", 3}}
 
@@ -122,13 +125,12 @@ defmodule Resourceful.Resource.AttributeTest do
   end
 
   test "validate_sorter/2" do
-    attr = attr() |> Attribute.sort(false)
+    attr = %{attr() | sort?: false}
 
     assert Attribute.validate_sorter(attr) ==
              {:error, {:cannot_sort_by_attribute, %{attribute: "artist"}}}
 
-    attr = attr |> Attribute.sort(true)
-
+    attr = %{attr | sort?: true}
     assert Attribute.validate_sorter(attr, :desc) == {:ok, {:desc, attr.map_to}}
   end
 end
