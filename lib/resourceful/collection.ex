@@ -16,7 +16,7 @@ defmodule Resourceful.Collection do
 
   alias Resourceful.Collection.{Delegate, Filter, Sort}
 
-  @default_pagination_per Application.get_env(:resourceful, :pagination_per, 50)
+  @default_pagination_per Application.get_env(:resourceful, :pagination_per, 25)
 
   @doc """
   Returns a all of resources that may be filtered and sorted depending on
