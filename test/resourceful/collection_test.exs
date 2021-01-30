@@ -16,13 +16,11 @@ defmodule Resourceful.CollectionTest do
 
   test "all/2" do
     opts =
-      @opts ++
-        [
-          filter: {"artist", "Duran Duran"},
-          page: 2,
-          per: 2,
-          sort: "-release_date"
-        ]
+      Keyword.merge(@opts,
+        filter: {"artist", "Duran Duran"},
+        page: [number: 2, size: 2],
+        sort: "-release_date"
+      )
 
     ids = [12, 10]
 
@@ -87,7 +85,11 @@ defmodule Resourceful.CollectionTest do
   test "gets totals with pagination info" do
     totals = %{pages: 5, resources: 15}
 
-    assert Collection.totals(Fixtures.albums(), per: 3) == totals
-    assert Collection.totals(Fixtures.albums_query(), @opts ++ [per: 3]) == totals
+    assert Collection.totals(Fixtures.albums(), page: [size: 3]) == totals
+
+    assert Collection.totals(
+             Fixtures.albums_query(),
+             Keyword.put(@opts, :page, size: 3)
+           ) == totals
   end
 end
