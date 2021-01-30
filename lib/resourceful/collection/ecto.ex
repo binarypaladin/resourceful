@@ -46,8 +46,8 @@ defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
 
   def paginate(queryable, _, -1), do: queryable
 
-  def paginate(queryable, page, per) do
-    by_limit(queryable, per, (page - 1) * per)
+  def paginate(queryable, number, size) do
+    by_limit(queryable, size, (number - 1) * size)
   end
 
   def sort(queryable, sorters) do
@@ -90,10 +90,10 @@ defimpl Resourceful.Collection.Delegate, for: Atom do
     |> Delegate.filters()
   end
 
-  def paginate(module, page, per) do
+  def paginate(module, number, size) do
     module
     |> to_query()
-    |> Delegate.paginate(page, per)
+    |> Delegate.paginate(number, size)
   end
 
   def sort(module, sorters) do

@@ -7,7 +7,7 @@ defprotocol Resourceful.Collection.Delegate do
 
   def filters(data_source)
 
-  def paginate(data_source, page, per)
+  def paginate(data_source, number, size)
 
   def sort(data_source, sorters)
 end
