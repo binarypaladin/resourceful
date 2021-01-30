@@ -1,16 +1,7 @@
 defmodule Resourceful.CollectionTest do
-  use ExUnit.Case
+  use Resourceful.Test.DatabaseCase
 
   alias Resourceful.Collection
-  alias Resourceful.Test.Fixtures
-  alias Resourceful.Test.Repo
-
-  import Resourceful.Test.Helpers
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Fixtures.seed_database()
-  end
 
   @opts [ecto_repo: Repo]
 

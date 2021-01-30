@@ -1,15 +1,7 @@
 defmodule Resourceful.Collection.Ecto.FiltersTest do
-  use ExUnit.Case
+  use Resourceful.Test.DatabaseCase
 
   alias Resourceful.Collection.Ecto.Filters
-  alias Resourceful.Test.{Album, Fixtures, Repo}
-
-  import Resourceful.Test.Helpers
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Fixtures.seed_database()
-  end
 
   test "equals" do
     assert Album

@@ -56,8 +56,7 @@ defmodule Resourceful.JSONAPI.ErrorTest do
   end
 
   test "to_map/2" do
-    assert @error_with_context
-           |> Error.to_map(http_status: 400, source_type: "parameter") ==
+    assert Error.to_map(@error_with_context, http_status: 400, source_type: "parameter") ==
              %{
                "code" => "type_cast_failure",
                "detail" => "`x` cannot be cast to type `date`.",

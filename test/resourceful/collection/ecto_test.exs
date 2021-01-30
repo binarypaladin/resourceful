@@ -1,17 +1,9 @@
 defmodule Resourceful.Collection.EctoTest do
-  use ExUnit.Case
+  use Resourceful.Test.DatabaseCase
 
   alias Resourceful.Collection
-  alias Resourceful.Test.Album
-  alias Resourceful.Test.Fixtures
-  alias Resourceful.Test.Repo
 
   @opts [ecto_repo: Repo]
-
-  setup do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
-    Fixtures.seed_database()
-  end
 
   test "all" do
     assert Collection.Ecto.all(Album, @opts) == Repo.all(Album)
