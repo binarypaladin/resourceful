@@ -98,6 +98,15 @@ defmodule Resourceful.Resource do
          do: ok
   end
 
+  # This is currently something of a placeholder function that will make much
+  # more sense when relationships actually work.
+  def with_resource_type(%Resource{} = resource, type) do
+    case resource.resource_type == type do
+      true -> resource
+      _ -> nil
+    end
+  end
+
   defp check_max(list, max, error_type, context) when length(list) > max do
     [Error.with_context(error_type, Map.put(context, :max_allowed, max)) | list]
   end
