@@ -37,15 +37,13 @@ defmodule Resourceful.CollectionTest do
     filter = {"title", "eq", "Rio"}
     ids = [3]
 
-    assert ids ==
-             Fixtures.albums()
-             |> Collection.filter(filter)
-             |> ids()
+    assert Fixtures.albums()
+           |> Collection.filter(filter)
+           |> ids() == ids
 
-    assert ids ==
-             Fixtures.albums_query()
-             |> Collection.filter(filter, @opts)
-             |> all_by(:id)
+    assert Fixtures.albums_query()
+           |> Collection.filter(filter, @opts)
+           |> all_by(:id) == ids
   end
 
   test "paginates a list" do
@@ -64,15 +62,13 @@ defmodule Resourceful.CollectionTest do
     sorter = "artist, -release_date"
     ids = [13, 7, 4, 11, 1, 15, 6, 14, 12, 10, 3, 8, 9, 5, 2]
 
-    assert ids ==
-             Fixtures.albums()
-             |> Collection.sort(sorter)
-             |> ids()
+    assert Fixtures.albums()
+           |> Collection.sort(sorter)
+           |> ids() == ids
 
-    assert ids ==
-             Fixtures.albums_query()
-             |> Collection.sort(sorter, @opts)
-             |> all_by(:id)
+    assert Fixtures.albums_query()
+           |> Collection.sort(sorter, @opts)
+           |> all_by(:id) == ids
   end
 
   test "gets total" do
