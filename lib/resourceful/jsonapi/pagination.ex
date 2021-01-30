@@ -8,7 +8,7 @@ defmodule Resourceful.JSONAPI.Pagination do
   @max_page_size Application.get_env(:resourceful, :max_page_size, 100)
 
   @number_size %{
-    per_field: :size,
+    size_field: :size,
     validations: %{
       number: [greater_than_or_equal_to: 1],
       size: [greater_than_or_equal_to: 1]
@@ -35,7 +35,7 @@ defmodule Resourceful.JSONAPI.Pagination do
     {%{}, Map.new(keys, &{&1, :integer})}
     |> cast(params, keys)
     |> do_number_validations(strategy.validations)
-    |> validate_number(strategy.per_field, less_than_or_equal_to: max_page_size)
+    |> validate_number(strategy.size_field, less_than_or_equal_to: max_page_size)
   end
 
   defp do_number_validations(changeset, number_validations) do
