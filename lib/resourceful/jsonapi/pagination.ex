@@ -1,4 +1,9 @@
 defmodule Resourceful.JSONAPI.Pagination do
+  @moduledoc """
+  Validates parameters provided by various pagination strategies and returns
+  paramaters as expected by `Resourceful.Collection`.
+  """
+
   import Ecto.Changeset
 
   @default_strategy :resourceful
