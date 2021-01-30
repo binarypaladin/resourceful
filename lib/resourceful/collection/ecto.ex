@@ -34,11 +34,9 @@ end
 defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
   import Ecto.Query, warn: false
 
-  def cast_filter(_, {field, op, val}) do
-    {String.to_existing_atom(field), op, val}
-  end
+  def cast_filter(_, {field, op, val}), do: {to_atom(field), op, val}
 
-  def cast_sorter(_, {order, field}), do: {order, String.to_existing_atom(field)}
+  def cast_sorter(_, {order, field}), do: {order, to_atom(field)}
 
   def collection(_), do: Resourceful.Collection.Ecto
 
@@ -61,10 +59,16 @@ defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
     |> limit(^limit)
     |> offset(^offset)
   end
+
+  defp to_atom(field) when is_binary(field), do: String.to_existing_atom(field)
+
+  defp to_atom(field) when is_atom(field), do: field
 end
 
 defimpl Resourceful.Collection.Delegate, for: Atom do
   alias Resourceful.Collection.Delegate
+
+  import Ecto.Queryable, only: [to_query: 1]
 
   def cast_filter(module, filter) do
     module
@@ -101,6 +105,4 @@ defimpl Resourceful.Collection.Delegate, for: Atom do
     |> to_query()
     |> Delegate.sort(sorters)
   end
-
-  defp to_query(module), do: Ecto.Queryable.to_query(module)
 end
