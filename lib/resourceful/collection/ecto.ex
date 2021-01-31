@@ -11,8 +11,6 @@ defmodule Resourceful.Collection.Ecto do
 
   alias Resourceful.Collection.Ecto.NoRepoError
 
-  @default_ecto_repo Application.get_env(:resourceful, :ecto_repo)
-
   def all(queryable, opts), do: repo(opts).all(queryable)
 
   def any?(queryable, opts) do
@@ -24,7 +22,11 @@ defmodule Resourceful.Collection.Ecto do
 
   def total(queryable, opts), do: repo(opts).aggregate(queryable, :count)
 
-  def repo(opts), do: Keyword.get(opts, :ecto_repo, @default_ecto_repo) || raise(NoRepoError)
+  def repo(opts) do
+    Keyword.get(opts, :ecto_repo) ||
+    Application.get_env(:resourceful, :ecto_repo) ||
+    raise(NoRepoError)
+  end
 end
 
 defimpl Resourceful.Collection.Delegate, for: Ecto.Query do

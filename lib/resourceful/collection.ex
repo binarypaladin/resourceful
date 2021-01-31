@@ -16,7 +16,7 @@ defmodule Resourceful.Collection do
 
   alias Resourceful.Collection.{Delegate, Filter, Sort}
 
-  @default_page_size Application.get_env(:resourceful, :default_page_size, 25)
+  @default_page_size 25
 
   @doc """
   Returns a all of resources that may be filtered and sorted depending on
@@ -113,6 +113,10 @@ defmodule Resourceful.Collection do
     %{pages: ceil(resources / page_size), resources: resources}
   end
 
+  defp default_page_size() do
+    Application.get_env(:resourceful, :default_page_size, @default_page_size)
+  end
+
   defp delegate_all(data_source, opts) do
     Delegate.collection(data_source).all(data_source, opts)
   end
@@ -126,5 +130,5 @@ defmodule Resourceful.Collection do
     |> Sort.call(sort)
   end
 
-  defp page_size_or_default(opts), do: get_in(opts, [:page, :size]) || @default_page_size
+  defp page_size_or_default(opts), do: get_in(opts, [:page, :size]) || default_page_size()
 end

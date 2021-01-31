@@ -6,11 +6,8 @@ defmodule Resourceful.JSONAPI.Pagination do
 
   import Ecto.Changeset
 
-  @default_strategy :resourceful
-                    |> Application.get_env(:jsonapi, [])
-                    |> Keyword.get(:pagination_strategy, :number_size)
-
-  @max_page_size Application.get_env(:resourceful, :max_page_size, 100)
+  @default_strategy :number_size
+  @default_max_page_size 100
 
   @number_size %{
     size_field: :size,
@@ -22,9 +19,9 @@ defmodule Resourceful.JSONAPI.Pagination do
 
   def validate(%{} = params, opts \\ []) do
     do_validate(
-      Keyword.get(opts, :pagination_strategy, @default_strategy),
+      Keyword.get(opts, :pagination_strategy) || default_strategy(),
       params,
-      Keyword.get(opts, :max_page_size, @max_page_size)
+      Keyword.get(opts, :max_page_size) || default_max_page_size()
     )
   end
 
@@ -47,6 +44,16 @@ defmodule Resourceful.JSONAPI.Pagination do
     Enum.reduce(number_validations, changeset, fn {key, opts}, chset ->
       validate_number(chset, key, opts)
     end)
+  end
+
+  defp default_strategy() do
+    :resourceful
+    |> Application.get_env(:jsonapi, [])
+    |> Keyword.get(:pagination_strategy, @default_strategy)
+  end
+
+  defp default_max_page_size() do
+    Application.get_env(:resourceful, :max_page_size, @default_max_page_size)
   end
 
   defp to_collection_params(%{valid?: true} = changeset), do: Keyword.new(changeset.changes)
