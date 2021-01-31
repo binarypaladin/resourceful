@@ -24,11 +24,7 @@ defmodule Resourceful.Collection.Ecto do
 
   def total(queryable, opts), do: repo(opts).aggregate(queryable, :count)
 
-  defp repo(opts) do
-    Keyword.get(opts, :ecto_repo) ||
-      @default_ecto_repo ||
-      raise(NoRepoError)
-  end
+  def repo(opts), do: Keyword.get(opts, :ecto_repo, @default_ecto_repo) || raise(NoRepoError)
 end
 
 defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
