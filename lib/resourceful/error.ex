@@ -96,6 +96,8 @@ defmodule Resourceful.Error do
   """
   def all(errors, opts \\ [])
 
+  def all(%Ecto.Changeset{} = changeset, _opts), do: from_changeset(changeset)
+
   def all(errors, opts) when is_list(errors) or is_map(errors) do
     if Keyword.get(opts, :auto_source) do
       auto_source(errors)
