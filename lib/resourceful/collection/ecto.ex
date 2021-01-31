@@ -24,8 +24,8 @@ defmodule Resourceful.Collection.Ecto do
 
   def repo(opts) do
     Keyword.get(opts, :ecto_repo) ||
-    Application.get_env(:resourceful, :ecto_repo) ||
-    raise(NoRepoError)
+      Application.get_env(:resourceful, :ecto_repo) ||
+      raise(NoRepoError)
   end
 end
 
