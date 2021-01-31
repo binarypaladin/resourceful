@@ -4,14 +4,14 @@ defmodule Resourceful.ResourceTest do
   alias Resourceful.Resource
   alias Resourceful.Resource.Attribute
 
-  def attributes() do
+  def attributes do
     %{
       "id" => Attribute.new("id", :integer),
       "name" => Attribute.new("name", :string)
     }
   end
 
-  def ecto_resource() do
+  def ecto_resource do
     Resource.Ecto.resource(
       Resourceful.Test.Album,
       query: true,
@@ -19,7 +19,7 @@ defmodule Resourceful.ResourceTest do
     )
   end
 
-  def resource(), do: Resource.new("artist", attributes: attributes())
+  def resource, do: Resource.new("artist", attributes: attributes())
 
   test "new/2" do
     resource = Resource.new("object")

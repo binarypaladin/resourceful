@@ -46,13 +46,13 @@ defmodule Resourceful.JSONAPI.Pagination do
     end)
   end
 
-  defp default_strategy() do
+  defp default_strategy do
     :resourceful
     |> Application.get_env(:jsonapi, [])
     |> Keyword.get(:pagination_strategy, @default_strategy)
   end
 
-  defp default_max_page_size() do
+  defp default_max_page_size do
     Application.get_env(:resourceful, :max_page_size, @default_max_page_size)
   end
 

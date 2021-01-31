@@ -2,7 +2,7 @@ defmodule Resourceful.Test.Fixtures do
   alias Resourceful.Test.{Album, Repo}
   alias Resourceful.Resource
 
-  def albums() do
+  def albums do
     [
       %{
         "id" => 1,
@@ -112,15 +112,15 @@ defmodule Resourceful.Test.Fixtures do
     ]
   end
 
-  def albums_query(), do: Ecto.Queryable.to_query(Album)
+  def albums_query, do: Ecto.Queryable.to_query(Album)
 
-  def jsonapi_resource() do
+  def jsonapi_resource do
     Album
     |> Resource.Ecto.resource(query: true, transform_names: &Inflex.camelize(&1, :lower))
     |> Resource.meta(:links, %{"self" => "albums/{id}"})
   end
 
-  def seed_database() do
+  def seed_database do
     Enum.map(albums(), fn album_map ->
       %Album{}
       |> Album.create_changeset(album_map)
@@ -128,5 +128,5 @@ defmodule Resourceful.Test.Fixtures do
     end)
   end
 
-  def sorters(), do: [asc: "artist", desc: "tracks", asc: "title"]
+  def sorters, do: [asc: "artist", desc: "tracks", asc: "title"]
 end

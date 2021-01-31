@@ -113,7 +113,7 @@ defmodule Resourceful.Collection do
     %{pages: ceil(resources / page_size), resources: resources}
   end
 
-  defp default_page_size() do
+  defp default_page_size do
     Application.get_env(:resourceful, :default_page_size, @default_page_size)
   end
 

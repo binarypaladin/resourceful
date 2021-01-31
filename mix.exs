@@ -16,13 +16,14 @@ defmodule Resourceful.MixProject do
 
   def application, do: [applications: []]
 
-  defp deps,
-    do: [
+  defp deps do
+    [
       {:ecto, "~> 3.4"},
       {:ecto_sql, "~> 3.4", only: [:test]},
       {:inflex, "~> 2.0.0", only: [:test]},
       {:postgrex, ">= 0.0.0", only: [:test]}
     ]
+  end
 
   defp package do
     %{
