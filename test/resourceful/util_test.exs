@@ -6,6 +6,8 @@ defmodule Resourceful.UtilTest do
   test "except_or_only!/2" do
     set = [:north, :west, :south, :east]
 
+    assert Util.except_or_only!([only: :north], set) == [:north]
+
     assert Util.except_or_only!([only: [:north, :south]], set) == [:north, :south]
 
     assert Util.except_or_only!([except: [:north, :south]], set) == [:east, :west]

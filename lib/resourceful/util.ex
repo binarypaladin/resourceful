@@ -29,8 +29,9 @@ defmodule Resourceful.Util do
     opt_set
   end
 
-  defp validate_except_or_only!(opt_set, set) when is_list(opt_set) do
+  defp validate_except_or_only!(opt_set, set) do
     opt_set
+    |> List.wrap()
     |> MapSet.new()
     |> validate_except_or_only!(set)
   end
