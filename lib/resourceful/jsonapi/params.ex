@@ -83,7 +83,11 @@ defmodule Resourceful.JSONAPI.Params do
 
   def validate_page(%{"page" => %{} = params}, opts) do
     case Pagination.validate(params, opts) do
-      %{valid?: false} = changeset -> Error.all(changeset)
+      %{valid?: false} = changeset ->
+        changeset
+        |> Error.from_changeset()
+        |> Error.prepend_source(:page)
+
       opts -> opts
     end
   end
