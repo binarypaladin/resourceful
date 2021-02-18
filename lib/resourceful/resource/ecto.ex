@@ -1,8 +1,23 @@
 defmodule Resourceful.Resource.Ecto do
-  alias Resourceful.Resource
-  alias Resourceful.Resource.Attribute
-  alias Resourceful.Util
+  @moduledoc """
+  Creates a `Resourceful.Resource` from an `Ecto.Schema` module. The use case
+  is that internal data will be represented by the schema and client-facing data
+  will be represented by the resource definition. Additionally, field names may
+  be mapped differently to the client, such as camel case values. This can be
+  done individually or with a single function as an option.
 
+  Since `Resourceful.Resource` instances use the same type system as Ecto, this
+  is a relatively straightforward conversion.
+  """
+
+  alias Resourceful.{Resource, Util}
+  alias Resourceful.Resource.Attribute
+
+  @doc """
+  Returns a `Resourceful.Attribute` based on a field from an `Ecto.Schema`
+  module.
+  """
+  @spec attribute(module(), atom(), keyword()) :: %Attribute{}
   def attribute(schema, field_name, opts \\ []) do
     Attribute.new(
       transform_name(field_name, Keyword.get(opts, :transform_names)),
@@ -11,6 +26,30 @@ defmodule Resourceful.Resource.Ecto do
     )
   end
 
+  @doc """
+  Returns a `Resourceful.Resource` from an `Ecto.Schema` module by inferring
+  values from the schema.
+
+  ## Options
+
+  For most options, a list of schema field names (atoms) will be passed in
+  specifying the resource's configuration for those fields. In these cases a
+  value of `true` or `:all` will result in all fields being used. For example if
+  you wanted to be able to query all fields, you would pass `[query: :all]`.
+
+    * `:except` - Schema fields to be excluded from the resource.
+    * `:filter` - Schema fields allowed to be filtered.
+    * `:only` - Schema fields to be included in the resource.
+    * `:query` - Schema fields allowed to be queried (sorted and filtered).
+    * `:sort` - Schema fields allowed to be sorted.
+    * `:transform_names` - A single argument function that takes the field name
+      (an atom) and transforms it into either another atom or a string. A type
+      of case conversion is the most likely use case.
+
+  Addionally, any options not mentioned above will be passed directly to
+  `Resourceful.Resource.new/2`.
+  """
+  @spec resource(module(), keyword()) :: %Resource{}
   def resource(schema, opts \\ []) do
     Resource.new(
       Keyword.get(opts, :resource_type, schema.__schema__(:source)),
@@ -19,9 +58,10 @@ defmodule Resourceful.Resource.Ecto do
   end
 
   defp attr_opts(attr_name, opts) do
-    Enum.map([:filter, :query, :sort], fn opt ->
-      {opt, in_opt_list?(opts, opt, attr_name)}
-    end) ++ opts
+    Keyword.merge(
+      opts,
+      Enum.map([:filter, :query, :sort], &{&1, in_opt_list?(opts, &1, attr_name)})
+    )
   end
 
   defp expand_all_opt({opt, val}, fields)
@@ -42,13 +82,11 @@ defmodule Resourceful.Resource.Ecto do
     fields = Util.except_or_only!(opts, schema.__schema__(:fields))
     opts = expand_all_opts(fields, opts)
 
-    [
-      attributes:
-        Enum.map(fields, fn field ->
-          attribute(schema, field, attr_opts(field, opts))
-        end),
+    Keyword.merge(opts,
+      attributes: Enum.map(fields, &attribute(schema, &1, attr_opts(&1, opts))),
+      meta: %{ecto: %{schema: schema}},
       id: Keyword.get(opts, :id, schema.__schema__(:primary_key))
-    ] ++ opts
+    )
   end
 
   defp transform_name(field_name, nil), do: to_string(field_name)

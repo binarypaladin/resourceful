@@ -88,7 +88,8 @@ defmodule Resourceful.JSONAPI.Params do
         |> Error.from_changeset()
         |> Error.prepend_source(:page)
 
-      opts -> opts
+      opts ->
+        opts
     end
   end
 
