@@ -52,8 +52,7 @@ defmodule Resourceful.JSONAPI.Error do
 
   def all({:error, errors}, opts), do: all(errors, opts)
 
-  def all(errors, opts) when is_list(errors),
-    do: Enum.map(errors, &to_map(&1, opts))
+  def all(errors, opts) when is_list(errors), do: Enum.map(errors, &to_map(&1, opts))
 
   @doc """
   Returns a map of all non-reserved attributes from a context map.
@@ -75,6 +74,16 @@ defmodule Resourceful.JSONAPI.Error do
   end
 
   def meta({:error, _}, _), do: nil
+
+  def parameter_source([]), do: nil
+
+  def parameter_source(source) do
+    Enum.reduce(tl(source), hd(source), fn src, str -> "#{str}[#{src}]" end)
+  end
+
+  def pointer_source([]), do: ""
+
+  def pointer_source(source), do: "/#{Enum.join(source, "/")}"
 
   @doc """
   Returns a JSON:API source map based on the `:source` attribute in a an error's
@@ -161,16 +170,6 @@ defmodule Resourceful.JSONAPI.Error do
     |> stringify_keys()
     |> Map.put("code", to_string(type))
   end
-
-  defp parameter_source([]), do: nil
-
-  defp parameter_source(source) do
-    Enum.reduce(tl(source), hd(source), fn src, str -> "#{str}[#{src}]" end)
-  end
-
-  defp pointer_source([]), do: ""
-
-  defp pointer_source(source), do: "/#{Enum.join(source, "/")}"
 
   defp stringify_keys(map), do: Map.new(map, fn {k, v} -> {to_string(k), v} end)
 
