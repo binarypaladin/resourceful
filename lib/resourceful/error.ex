@@ -208,9 +208,7 @@ defmodule Resourceful.Error do
   def auto_source(list, prefix) when is_list(list) do
     list
     |> Stream.with_index()
-    |> Enum.map(fn {val, src} ->
-      auto_source(val, prefix ++ [src])
-    end)
+    |> Enum.map(fn {val, src} -> auto_source(val, prefix ++ [src]) end)
   end
 
   def auto_source({:error, _} = error, prefix), do: prepend_source(error, prefix)
@@ -304,8 +302,7 @@ defmodule Resourceful.Error do
   def humanize({:error, {type, %{} = context}}, _opts) do
     {:error,
      {type,
-      [:detail, :title]
-      |> Enum.reduce(context, fn key, new_ctx ->
+      Enum.reduce([:detail, :title], context, fn key, new_ctx ->
         case Map.get(context, key) || default_type_message([type, key]) do
           nil -> new_ctx
           msg -> Map.put(new_ctx, key, message_with_context(msg, context))
@@ -415,6 +412,10 @@ defmodule Resourceful.Error do
 
   Returns a contextual error tuple.
   """
+  def prepend_source(errors, prefix) when is_list(errors) do
+    Enum.map(errors, &prepend_source(&1, prefix))
+  end
+
   def prepend_source({:error, {error, %{source: source} = context}}, prefix) do
     {:error, {error, %{context | source: List.wrap(prefix) ++ source}}}
   end
