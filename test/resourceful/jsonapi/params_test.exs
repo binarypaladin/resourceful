@@ -74,7 +74,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                    source: ["filter", "releaseDate lt"],
                    type: :date
                  }},
-              error: {:type_cast_failure, %{input: nil, source: [:size], type: :integer}},
+              error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}},
               error:
                 {:attribute_not_found,
                  %{
