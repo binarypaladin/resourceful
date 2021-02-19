@@ -36,8 +36,14 @@ defmodule Resourceful.Collection do
   """
   def all(data_source, opts \\ []) do
     data_source
-    |> filter_and_sort(opts)
+    |> query(opts)
     |> paginate(opts)
+  end
+
+  def all_with_page_info(data_source, opts \\ []) do
+    data_source
+    |> query(opts)
+    |> paginate_with_info(opts)
   end
 
   @doc """
@@ -53,11 +59,44 @@ defmodule Resourceful.Collection do
     Delegate.collection(data_source).any?(data_source, opts)
   end
 
+  def default_page_size do
+    Application.get_env(:resourceful, :default_page_size, @default_page_size)
+  end
+
   def filter(data_source, filters, opts \\ []) do
     data_source
     |> Filter.call(filters)
     |> delegate_all(opts)
   end
+
+  @doc """
+  Returns the total number of resources and pages based on `page_size` in a
+  `data_source`.
+
+  Args:
+    * `data_source`: See module overview.
+    * `opts`: Keyword all of options
+
+  Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
+  """
+  def page_info(data_source, opts) when is_list(opts) do
+    page_info(data_source, page_size_or_default(opts), opts)
+  end
+
+  def page_info(data_source, page_size, opts \\ []) when is_integer(page_size) do
+    resources = total(data_source, opts)
+
+    %{
+      number: page_number_or_default(opts),
+      resources: resources,
+      size: page_size,
+      total: ceil(resources / page_size)
+    }
+  end
+
+  def page_number_or_default(opts), do: get_in(opts, [:page, :number]) || 1
+
+  def page_size_or_default(opts), do: get_in(opts, [:page, :size]) || default_page_size()
 
   def paginate(data_source, number, size, opts \\ [])
       when is_integer(number) and is_integer(size) do
@@ -69,10 +108,20 @@ defmodule Resourceful.Collection do
   def paginate(data_source, opts \\ []) do
     paginate(
       data_source,
-      get_in(opts, [:page, :number]) || 1,
+      page_number_or_default(opts),
       page_size_or_default(opts),
       opts
     )
+  end
+
+  def paginate_with_info(data_source, opts \\ []) do
+    {paginate(data_source, opts), page_info(data_source, opts)}
+  end
+
+  def query(data_source, opts) do
+    data_source
+    |> Filter.call(Keyword.get(opts, :filter, []))
+    |> Sort.call(Keyword.get(opts, :sort, []))
   end
 
   def sort(data_source, sorters, opts \\ []) do
@@ -94,41 +143,7 @@ defmodule Resourceful.Collection do
     Delegate.collection(data_source).total(data_source, opts)
   end
 
-  @doc """
-  Returns the total number of resources and pages based on `page_size` in a
-  `data_source`.
-
-  Args:
-    * `data_source`: See module overview.
-    * `opts`: Keyword all of options
-
-  Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
-  """
-  def totals(data_source, opts) when is_list(opts) do
-    totals(data_source, page_size_or_default(opts), opts)
-  end
-
-  def totals(data_source, page_size, opts \\ []) when is_integer(page_size) do
-    resources = total(data_source, opts)
-    %{pages: ceil(resources / page_size), resources: resources}
-  end
-
-  defp default_page_size do
-    Application.get_env(:resourceful, :default_page_size, @default_page_size)
-  end
-
   defp delegate_all(data_source, opts) do
     Delegate.collection(data_source).all(data_source, opts)
   end
-
-  defp filter_and_sort(data_source, opts) do
-    filter = Keyword.get(opts, :filter, [])
-    sort = Keyword.get(opts, :sort, [])
-
-    data_source
-    |> Filter.call(filter)
-    |> Sort.call(sort)
-  end
-
-  defp page_size_or_default(opts), do: get_in(opts, [:page, :size]) || default_page_size()
 end

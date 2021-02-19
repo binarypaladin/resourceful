@@ -69,14 +69,17 @@ defmodule Resourceful.CollectionTest do
     assert Collection.total(Fixtures.albums_query(), @opts) == total
   end
 
-  test "gets totals with pagination info" do
-    totals = %{pages: 5, resources: 15}
+  test "gets pagination info" do
+    totals = %{resources: 15, number: 1, size: 3, total: 5}
 
-    assert Collection.totals(Fixtures.albums(), page: [size: 3]) == totals
+    assert Collection.page_info(Fixtures.albums(), page: [size: 3]) == totals
 
-    assert Collection.totals(
+    assert Collection.page_info(
              Fixtures.albums_query(),
              Keyword.put(@opts, :page, size: 3)
            ) == totals
+
+    assert Collection.all_with_page_info(Fixtures.albums(), page: [size: 3]) ==
+             {Collection.all(Fixtures.albums(), page: [size: 3]), totals}
   end
 end
