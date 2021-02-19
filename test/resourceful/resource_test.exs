@@ -73,6 +73,18 @@ defmodule Resourceful.ResourceTest do
 
   test "id/2", do: assert(Resource.id(resource(), "name").id == "name")
 
+  test "map_value/3" do
+    assert Resource.map_value(ecto_resource(), %{tracks: 2}, "tracks") == 2
+  end
+
+  test "map_values/3" do
+    assert Resource.map_values(
+             ecto_resource(),
+             %{artist: "Queen", title: "Queen II", tracks: 2},
+             ["title", "artist"]
+           ) == [{"title", "Queen II"}, {"artist", "Queen"}]
+  end
+
   test "max_filters/2" do
     assert Resource.max_filters(resource(), 10).max_filters == 10
     assert Resource.max_filters(resource(), nil).max_filters == nil
@@ -95,6 +107,14 @@ defmodule Resourceful.ResourceTest do
 
   test "resource_type/2" do
     assert Resource.resource_type(resource(), "object").resource_type == "object"
+  end
+
+  test "to_map/3" do
+    assert Resource.to_map(
+             ecto_resource(),
+             %{artist: "Queen", title: "Queen II", tracks: 2},
+             ["title", "artist"]
+           ) == %{"artist" => "Queen", "title" => "Queen II"}
   end
 
   test "validate_filter/2" do

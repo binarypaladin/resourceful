@@ -45,16 +45,33 @@ defmodule Resourceful.Resource do
 
   def get_attribute(%Resource{} = resource, name), do: Map.get(resource.attributes, name)
 
-  def get_id(resource, data), do: map_value(resource, resource.id, data)
+  def get_id(resource, data), do: map_value(resource, data, resource.id)
 
-  def map_value(%Resource{} = resource, attribute_name, data) do
+  def id(resource, id_attribute), do: put(resource, :id, opt_id(id_attribute))
+
+  def map_value(%Resource{} = resource, data, attribute_name) do
     case fetch_attribute(resource, attribute_name) do
       {:ok, attr} -> Attribute.map_value(attr, data)
       _ -> nil
     end
   end
 
-  def id(resource, id_attribute), do: put(resource, :id, opt_id(id_attribute))
+  @doc """
+  Takes a resource, mappable data, and a list of attributes. Returns a list of
+  tuples with the attribute name and the mapped value. This is returned instead
+  of a map to preserve the order of the input list. If order is irrelevant,
+  use `to_map/2` instead.
+  """
+  @spec to_map(%Resource{}, any(), list()) :: [{any(), any()}]
+  def map_values(resource, data, attribute_names \\ [])
+
+  def map_values(resource, data, []) do
+    map_values(resource, data, Map.keys(resource.attributes))
+  end
+
+  def map_values(resource, data, attribute_names) when is_list(attribute_names) do
+    Enum.map(attribute_names, &{&1, map_value(resource, data, &1)})
+  end
 
   def max_filters(resource, max_filters) do
     put(resource, :max_filters, opt_max(max_filters))
@@ -74,6 +91,17 @@ defmodule Resourceful.Resource do
 
   def resource_type(resource, resource_type) do
     put(resource, :resource_type, opt_resource_type(resource_type))
+  end
+
+  @doc """
+  Like `map_values/3` only returns a map with keys in the name of the attributes
+  with the appro
+  """
+  @spec to_map(%Resource{}, any(), list()) :: map()
+  def to_map(resource, data, attribute_names \\ []) do
+    resource
+    |> map_values(data, attribute_names)
+    |> Map.new()
   end
 
   def validate_filter(resource, filter) do
