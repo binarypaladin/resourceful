@@ -18,6 +18,17 @@ defmodule Resourceful.Collection do
 
   @default_page_size 25
 
+  @type page_info() :: %{
+          number: integer(),
+          resources: integer(),
+          size: integer(),
+          total: integer()
+        }
+
+  @type with_page_info() :: {[any()], page_info()}
+
+  @type with_page_info(type) :: {[type], page_info()}
+
   @doc """
   Returns a list of resources that may be filtered and sorted depending on
   on options. Resources will always be paginated.
@@ -34,12 +45,14 @@ defmodule Resourceful.Collection do
   Additionally, see settings for the delegated module as it may take additional
   options.
   """
+  @spec all(any(), keyword()) :: [any()]
   def all(data_source, opts \\ []) do
     data_source
     |> query(opts)
     |> paginate(opts)
   end
 
+  @spec all_with_page_info(any(), keyword()) :: with_page_info()
   def all_with_page_info(data_source, opts \\ []) do
     data_source
     |> query(opts)
@@ -55,14 +68,17 @@ defmodule Resourceful.Collection do
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """
+  @spec any?(any(), keyword()) :: boolean()
   def any?(data_source, opts \\ []) do
     Delegate.collection(data_source).any?(data_source, opts)
   end
 
+  @spec default_page_size() :: integer()
   def default_page_size do
     Application.get_env(:resourceful, :default_page_size, @default_page_size)
   end
 
+  @spec filter(any(), keyword(), keyword()) :: any()
   def filter(data_source, filters, opts \\ []) do
     data_source
     |> Filter.call(filters)
@@ -79,10 +95,12 @@ defmodule Resourceful.Collection do
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """
+  @spec page_info(any(), keyword()) :: page_info()
   def page_info(data_source, opts) when is_list(opts) do
     page_info(data_source, page_size_or_default(opts), opts)
   end
 
+  @spec page_info(any(), integer(), keyword()) :: page_info()
   def page_info(data_source, page_size, opts \\ []) when is_integer(page_size) do
     resources = total(data_source, opts)
 
@@ -94,10 +112,13 @@ defmodule Resourceful.Collection do
     }
   end
 
+  @spec page_number_or_default(keyword()) :: integer()
   def page_number_or_default(opts), do: get_in(opts, [:page, :number]) || 1
 
+  @spec page_size_or_default(keyword()) :: integer()
   def page_size_or_default(opts), do: get_in(opts, [:page, :size]) || default_page_size()
 
+  @spec paginate(any(), integer(), integer(), keyword()) :: [any()]
   def paginate(data_source, number, size, opts \\ [])
       when is_integer(number) and is_integer(size) do
     data_source
@@ -105,6 +126,7 @@ defmodule Resourceful.Collection do
     |> delegate_all(opts)
   end
 
+  @spec paginate(any(), keyword()) :: [any()]
   def paginate(data_source, opts \\ []) do
     paginate(
       data_source,
@@ -114,16 +136,19 @@ defmodule Resourceful.Collection do
     )
   end
 
+  @spec paginate_with_info(any(), keyword()) :: with_page_info()
   def paginate_with_info(data_source, opts \\ []) do
     {paginate(data_source, opts), page_info(data_source, opts)}
   end
 
+  @spec query(any(), keyword()) :: any()
   def query(data_source, opts) do
     data_source
     |> Filter.call(Keyword.get(opts, :filter, []))
     |> Sort.call(Keyword.get(opts, :sort, []))
   end
 
+  @spec sort(any(), keyword(), keyword()) :: any()
   def sort(data_source, sorters, opts \\ []) do
     data_source
     |> Sort.call(sorters)
@@ -139,6 +164,7 @@ defmodule Resourceful.Collection do
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """
+  @spec total(any(), keyword()) :: integer()
   def total(data_source, opts \\ []) do
     Delegate.collection(data_source).total(data_source, opts)
   end
