@@ -5,7 +5,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   alias Resourceful.Test.Fixtures
 
   test "validate/3 with valid params" do
-    resource = Fixtures.jsonapi_resource()
+    type = Fixtures.jsonapi_type()
 
     params = %{
       "fields" => %{"albums" => "releaseDate,title"},
@@ -14,7 +14,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
       "sort" => "-releaseDate,title"
     }
 
-    {:ok, opts} = Params.validate(resource, params)
+    {:ok, opts} = Params.validate(type, params)
 
     assert [
              fields: %{"albums" => ["releaseDate", "title"]},
@@ -24,11 +24,11 @@ defmodule Resourceful.JSONAPI.ParamsTest do
            ] == opts
 
     assert {:ok, [fields: %{"albums" => ["releaseDate"]}]} ==
-             Params.validate(resource, %{"fields" => %{"albums" => "releaseDate"}})
+             Params.validate(type, %{"fields" => %{"albums" => "releaseDate"}})
   end
 
   test "validate/3 with invalid params" do
-    resource = Fixtures.jsonapi_resource()
+    type = Fixtures.jsonapi_type()
 
     params = %{
       "fields" => "albums",
@@ -43,11 +43,11 @@ defmodule Resourceful.JSONAPI.ParamsTest do
               error: {:invalid_jsonapi_parameter, %{input: "releaseDate", source: ["filter"]}},
               error: {:invalid_jsonapi_parameter, %{input: "2", source: ["page"]}},
               error: {:invalid_jsonapi_parameter, %{input: %{}, source: ["sort"]}}
-            ]} == Params.validate(resource, params)
+            ]} == Params.validate(type, params)
   end
 
-  test "validate/3 with invalid resource values" do
-    resource = Fixtures.jsonapi_resource()
+  test "validate/3 with invalid type values" do
+    type = Fixtures.jsonapi_type()
 
     params = %{
       "fields" => %{"albums" => ["releaseDate", "titl"]},
@@ -83,6 +83,6 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                    resource_type: "albums",
                    source: ["sort"]
                  }}
-            ]} == Params.validate(resource, params)
+            ]} == Params.validate(type, params)
   end
 end

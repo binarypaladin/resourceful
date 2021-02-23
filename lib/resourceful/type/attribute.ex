@@ -1,4 +1,4 @@
-defmodule Resourceful.Resource.Attribute do
+defmodule Resourceful.Type.Attribute do
   alias __MODULE__
   alias Resourceful.Error
   alias Resourceful.Collection.Filter
@@ -52,9 +52,11 @@ defmodule Resourceful.Resource.Attribute do
 
   def map_to(attr, map_to), do: put(attr, :map_to, map_to)
 
-  def map_value(%Attribute{getter: nil, map_to: map_to}, data), do: Map.get(data, map_to)
+  def map_value(%Attribute{getter: nil, map_to: map_to}, resource) do
+    Map.get(resource, map_to)
+  end
 
-  def map_value(%Attribute{} = attr, data), do: attr.getter.(attr, data)
+  def map_value(%Attribute{} = attr, resource), do: attr.getter.(attr, resource)
 
   def name(attr, name), do: put(attr, :name, opt_name(name))
 

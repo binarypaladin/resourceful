@@ -1,10 +1,10 @@
-defmodule Resourceful.Resource.AttributeTest do
+defmodule Resourceful.Type.AttributeTest do
   use ExUnit.Case
 
-  alias Resourceful.Resource.Attribute
+  alias Resourceful.Type.Attribute
   alias Resourceful.Test.Album
 
-  @data %{artist: "David Bowie"}
+  @resource %{artist: "David Bowie"}
 
   def attr, do: Attribute.new(:artist, :string)
 
@@ -15,7 +15,7 @@ defmodule Resourceful.Resource.AttributeTest do
     assert attr.name == "artist"
     assert attr.sort? == false
     assert attr.type == :string
-    assert Attribute.map_value(attr, @data) == "David Bowie"
+    assert Attribute.map_value(attr, @resource) == "David Bowie"
   end
 
   test "new/3 with keywords" do
@@ -32,7 +32,7 @@ defmodule Resourceful.Resource.AttributeTest do
     assert attr.map_to == :artist
     assert attr.name == "name"
     assert attr.sort? == true
-    assert Attribute.map_value(attr, @data) == "David Bowie"
+    assert Attribute.map_value(attr, @resource) == "David Bowie"
   end
 
   test "cast/2" do
@@ -60,23 +60,23 @@ defmodule Resourceful.Resource.AttributeTest do
   end
 
   test "getter/2" do
-    func = fn attr, data ->
-      data
+    func = fn attr, resource ->
+      resource
       |> Map.get(attr.map_to, "undefined #{attr.name}")
       |> String.upcase()
     end
 
     attr = Attribute.getter(attr(), func)
-    assert Attribute.map_value(attr, @data) == "DAVID BOWIE"
+    assert Attribute.map_value(attr, @resource) == "DAVID BOWIE"
     assert Attribute.map_value(attr, %{}) == "UNDEFINED ARTIST"
   end
 
   test "map_to/2" do
     attr = Attribute.map_to(attr(), "artist")
-    data = %{"artist" => "Duran Duran"}
+    resource = %{"artist" => "Duran Duran"}
 
     assert attr.map_to == "artist"
-    assert Attribute.map_value(attr, data) == "Duran Duran"
+    assert Attribute.map_value(attr, resource) == "Duran Duran"
   end
 
   test "name/2" do
@@ -106,7 +106,7 @@ defmodule Resourceful.Resource.AttributeTest do
   test "validate_filter/3" do
     attr =
       Album
-      |> Resourceful.Resource.Ecto.attribute(:tracks)
+      |> Resourceful.Type.Ecto.attribute(:tracks)
       |> Map.put(:filter?, false)
 
     assert Attribute.validate_filter(attr, "gte", "3") ==

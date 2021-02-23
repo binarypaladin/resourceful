@@ -8,28 +8,28 @@ defmodule Resourceful.JSONAPI.FieldsTest do
   @cached_fields MapSet.new(["title"])
 
   test "from_attributes/1" do
-    resource = Fixtures.jsonapi_resource()
-    assert Fields.from_attributes(resource) == @fields
+    type = Fixtures.jsonapi_type()
+    assert Fields.from_attributes(type) == @fields
 
-    resource = put_in(resource, [Access.key(:meta), :jsonapi], %{attributes: @cached_fields})
-    assert Fields.from_attributes(resource) == @cached_fields
+    type = put_in(type, [Access.key(:meta), :jsonapi], %{attributes: @cached_fields})
+    assert Fields.from_attributes(type) == @cached_fields
   end
 
-  test "from_resource/1" do
-    resource = Fixtures.jsonapi_resource()
-    assert Fields.from_resource(resource) == @fields
+  test "from_type/1" do
+    type = Fixtures.jsonapi_type()
+    assert Fields.from_type(type) == @fields
 
-    resource = put_in(resource, [Access.key(:meta), :jsonapi], %{fields: @cached_fields})
-    assert Fields.from_resource(resource) == @cached_fields
+    type = put_in(type, [Access.key(:meta), :jsonapi], %{fields: @cached_fields})
+    assert Fields.from_type(type) == @cached_fields
   end
 
   test "validate/2" do
-    resource = Fixtures.jsonapi_resource()
+    type = Fixtures.jsonapi_type()
 
-    assert Fields.validate(resource, %{"albums" => "releaseDate,title"}) ==
+    assert Fields.validate(type, %{"albums" => "releaseDate,title"}) ==
              %{"albums" => [ok: "releaseDate", ok: "title"]}
 
-    assert Fields.validate(resource, %{"albums" => "releaseDate,titl"}) ==
+    assert Fields.validate(type, %{"albums" => "releaseDate,titl"}) ==
              %{
                "albums" => [
                  ok: "releaseDate",
@@ -44,7 +44,7 @@ defmodule Resourceful.JSONAPI.FieldsTest do
                ]
              }
 
-    assert Fields.validate(resource, %{"albums" => ["releaseDate", "titl"]}) ==
+    assert Fields.validate(type, %{"albums" => ["releaseDate", "titl"]}) ==
              %{
                "albums" => [
                  ok: "releaseDate",
@@ -59,7 +59,7 @@ defmodule Resourceful.JSONAPI.FieldsTest do
                ]
              }
 
-    assert Fields.validate(resource, %{"records" => "releaseDate,title"}) ==
+    assert Fields.validate(type, %{"records" => "releaseDate,title"}) ==
              %{"records" => [error: {:invalid_jsonapi_field_type, %{key: "records"}}]}
   end
 end

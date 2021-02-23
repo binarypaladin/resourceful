@@ -102,7 +102,7 @@ defmodule Resourceful.JSONAPI.Error do
   @doc """
   Returns a JSON:API source map. Either:
     1. `%{"pointer" => "/data/attributes/problem"}`
-    2. `%{"parameter" => "fields[resource]"}`
+    2. `%{"parameter" => "fields[resource_type]"}`
   """
   def source_string(source, source_type) when is_list(source) do
     str_sources = Enum.map(source, &to_string/1)

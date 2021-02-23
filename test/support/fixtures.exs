@@ -1,6 +1,6 @@
 defmodule Resourceful.Test.Fixtures do
   alias Resourceful.Test.{Album, Repo}
-  alias Resourceful.Resource
+  alias Resourceful.Type
 
   def albums do
     [
@@ -114,10 +114,10 @@ defmodule Resourceful.Test.Fixtures do
 
   def albums_query, do: Ecto.Queryable.to_query(Album)
 
-  def jsonapi_resource do
+  def jsonapi_type do
     Album
-    |> Resource.Ecto.resource(query: true, transform_names: &Inflex.camelize(&1, :lower))
-    |> Resource.meta(:links, %{"self" => "albums/{id}"})
+    |> Type.Ecto.type(query: true, transform_names: &Inflex.camelize(&1, :lower))
+    |> Type.meta(:links, %{"self" => "albums/{id}"})
   end
 
   def seed_database do

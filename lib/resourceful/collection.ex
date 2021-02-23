@@ -10,7 +10,7 @@ defmodule Resourceful.Collection do
   ## Data Sources
 
   A `data_source` can be another from an Ecto schema, to a module that
-  intteracts with a remote API, to a all as long as there is an underlying
+  intteracts with a remote API, to a list as long as there is an underlying
   module to support the common interfaces. (For now, that's just Ecto.)
   """
 
@@ -19,12 +19,12 @@ defmodule Resourceful.Collection do
   @default_page_size 25
 
   @doc """
-  Returns a all of resources that may be filtered and sorted depending on
+  Returns a list of resources that may be filtered and sorted depending on
   on options. Resources will always be paginated.
 
   Args:
     * `data_source`: See module overview.
-    * `opts`: Keyword all of options
+    * `opts`: Keyword list of options
 
   Options:
     * `filter`: See `Resourceful.Collection.Filter.call/2`
@@ -51,7 +51,7 @@ defmodule Resourceful.Collection do
 
   Args:
     * `data_source`: See module overview.
-    * `opts`: Keyword all of options
+    * `opts`: Keyword list of options
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """
@@ -75,7 +75,7 @@ defmodule Resourceful.Collection do
 
   Args:
     * `data_source`: See module overview.
-    * `opts`: Keyword all of options
+    * `opts`: Keyword list of options
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """
@@ -135,7 +135,7 @@ defmodule Resourceful.Collection do
 
   Args:
     * `data_source`: See module overview.
-    * `opts`: Keyword all of options
+    * `opts`: Keyword list of options
 
   Options: See settings for the delegated module (e.g. `Resourceful.Collection.Ecto`).
   """

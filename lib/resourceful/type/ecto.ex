@@ -1,20 +1,20 @@
-defmodule Resourceful.Resource.Ecto do
+defmodule Resourceful.Type.Ecto do
   @moduledoc """
-  Creates a `Resourceful.Resource` from an `Ecto.Schema` module. The use case
+  Creates a `Resourceful.Type` from an `Ecto.Schema` module. The use case
   is that internal data will be represented by the schema and client-facing data
   will be represented by the resource definition. Additionally, field names may
   be mapped differently to the client, such as camel case values. This can be
   done individually or with a single function as an option.
 
-  Since `Resourceful.Resource` instances use the same type system as Ecto, this
+  Since `Resourceful.Type` instances use the same type system as Ecto, this
   is a relatively straightforward conversion.
   """
 
-  alias Resourceful.{Resource, Util}
-  alias Resourceful.Resource.Attribute
+  alias Resourceful.{Type, Util}
+  alias Resourceful.Type.Attribute
 
   @doc """
-  Returns a `Resourceful.Attribute` based on a field from an `Ecto.Schema`
+  Returns a `Resourceful.Type.Attribute` based on a field from an `Ecto.Schema`
   module.
   """
   @spec attribute(module(), atom(), keyword()) :: %Attribute{}
@@ -27,19 +27,19 @@ defmodule Resourceful.Resource.Ecto do
   end
 
   @doc """
-  Returns a `Resourceful.Resource` from an `Ecto.Schema` module by inferring
+  Returns a `Resourceful.Type` from an `Ecto.Schema` module by inferring
   values from the schema.
 
   ## Options
 
   For most options, a list of schema field names (atoms) will be passed in
-  specifying the resource's configuration for those fields. In these cases a
-  value of `true` or `:all` will result in all fields being used. For example if
-  you wanted to be able to query all fields, you would pass `[query: :all]`.
+  specifying the type's configuration for those fields. In these cases a value
+  of `true` or `:all` will result in all fields being used. For example if you
+  wanted to be able to query all fields, you would pass `[query: :all]`.
 
-    * `:except` - Schema fields to be excluded from the resource.
+    * `:except` - Schema fields to be excluded from the type.
     * `:filter` - Schema fields allowed to be filtered.
-    * `:only` - Schema fields to be included in the resource.
+    * `:only` - Schema fields to be included in the type.
     * `:query` - Schema fields allowed to be queried (sorted and filtered).
     * `:sort` - Schema fields allowed to be sorted.
     * `:transform_names` - A single argument function that takes the field name
@@ -47,13 +47,13 @@ defmodule Resourceful.Resource.Ecto do
       of case conversion is the most likely use case.
 
   Addionally, any options not mentioned above will be passed directly to
-  `Resourceful.Resource.new/2`.
+  `Resourceful.Type.new/2`.
   """
-  @spec resource(module(), keyword()) :: %Resource{}
-  def resource(schema, opts \\ []) do
-    Resource.new(
-      Keyword.get(opts, :resource_type, schema.__schema__(:source)),
-      resource_opts(schema, opts)
+  @spec type(module(), keyword()) :: %Type{}
+  def type(schema, opts \\ []) do
+    Type.new(
+      Keyword.get(opts, :name, schema.__schema__(:source)),
+      type_opts(schema, opts)
     )
   end
 
@@ -78,7 +78,7 @@ defmodule Resourceful.Resource.Ecto do
     |> Enum.member?(attr)
   end
 
-  defp resource_opts(schema, opts) do
+  defp type_opts(schema, opts) do
     fields = Util.except_or_only!(opts, schema.__schema__(:fields))
     opts = expand_all_opts(fields, opts)
 
