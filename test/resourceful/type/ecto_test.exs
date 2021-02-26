@@ -15,7 +15,7 @@ defmodule Resourceful.Type.EctoTest do
   end
 
   test "type/2" do
-    type = Ecto.type(Album, transform_names: &Inflex.camelize(&1, :lower))
+    type = Ecto.type_with_schema(Album, transform_names: &Inflex.camelize(&1, :lower))
 
     assert Map.keys(type.attributes) ==
              ["artist", "id", "releaseDate", "title", "tracks"]
@@ -28,7 +28,7 @@ defmodule Resourceful.Type.EctoTest do
            |> Map.values()
            |> Enum.all?(& &1.sort?) == false
 
-    type = Ecto.type(Album, query: :all)
+    type = Ecto.type_with_schema(Album, query: :all)
 
     assert type.attributes
            |> Map.values()
@@ -38,7 +38,7 @@ defmodule Resourceful.Type.EctoTest do
            |> Map.values()
            |> Enum.all?(& &1.sort?) == true
 
-    type = Ecto.type(Album, only: [:id, :artist], filter: [:artist], sort: [:id])
+    type = Ecto.type_with_schema(Album, only: [:id, :artist], filter: [:artist], sort: [:id])
 
     assert Type.get_attribute(type, "artist").filter? == true
     assert Type.get_attribute(type, "artist").sort? == false
@@ -46,7 +46,7 @@ defmodule Resourceful.Type.EctoTest do
     assert Type.get_attribute(type, "id").sort? == true
     assert Map.keys(type.attributes) == ["artist", "id"]
 
-    type = Ecto.type(Album, except: [:tracks])
+    type = Ecto.type_with_schema(Album, except: [:tracks])
     assert map_size(type.attributes) == 4
     assert Map.has_key?(type.attributes, "tracks") == false
   end

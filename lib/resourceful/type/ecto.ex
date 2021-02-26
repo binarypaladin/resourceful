@@ -49,8 +49,8 @@ defmodule Resourceful.Type.Ecto do
   Addionally, any options not mentioned above will be passed directly to
   `Resourceful.Type.new/2`.
   """
-  @spec type(module(), keyword()) :: %Type{}
-  def type(schema, opts \\ []) do
+  @spec type_with_schema(module(), keyword()) :: %Type{}
+  def type_with_schema(schema, opts \\ []) do
     Type.new(
       Keyword.get(opts, :name, schema.__schema__(:source)),
       type_opts(schema, opts)

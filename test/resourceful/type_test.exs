@@ -12,7 +12,7 @@ defmodule Resourceful.TypeTest do
   end
 
   def ecto_type do
-    Type.Ecto.type(
+    Type.Ecto.type_with_schema(
       Resourceful.Test.Album,
       query: true,
       transform_names: &Inflex.camelize(&1, :lower)

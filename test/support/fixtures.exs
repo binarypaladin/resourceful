@@ -116,7 +116,7 @@ defmodule Resourceful.Test.Fixtures do
 
   def jsonapi_type do
     Album
-    |> Type.Ecto.type(query: true, transform_names: &Inflex.camelize(&1, :lower))
+    |> Type.Ecto.type_with_schema(query: true, transform_names: &Inflex.camelize(&1, :lower))
     |> Type.meta(:links, %{"self" => "albums/{id}"})
   end
 
