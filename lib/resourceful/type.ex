@@ -15,7 +15,7 @@ defmodule Resourceful.Type do
     :name
   ]
 
-  defstruct @enforce_keys
+  defstruct @enforce_keys ++ [:registry]
 
   def new(name, opts \\ []) do
     attributes = opt_attrs(Keyword.get(opts, :attributes, %{}))
@@ -91,6 +91,10 @@ defmodule Resourceful.Type do
 
   def put_attribute(%Type{} = type, %Attribute{} = attr) do
     put_in(type, [Access.key(:attributes), attr.name], attr)
+  end
+
+  def registry(type, module) when is_atom(module) do
+    put(type, :registry, module)
   end
 
   @doc """
