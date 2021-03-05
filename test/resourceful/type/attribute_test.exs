@@ -59,26 +59,6 @@ defmodule Resourceful.Type.AttributeTest do
     assert attr.filter? == false
   end
 
-  test "getter/2" do
-    func = fn attr, resource ->
-      resource
-      |> Map.get(attr.map_to, "undefined #{attr.name}")
-      |> String.upcase()
-    end
-
-    attr = Attribute.getter(attr(), func)
-    assert Attribute.map_value(attr, @resource) == "DAVID BOWIE"
-    assert Attribute.map_value(attr, %{}) == "UNDEFINED ARTIST"
-  end
-
-  test "map_to/2" do
-    attr = Attribute.map_to(attr(), "artist")
-    resource = %{"artist" => "Duran Duran"}
-
-    assert attr.map_to == "artist"
-    assert Attribute.map_value(attr, resource) == "Duran Duran"
-  end
-
   test "name/2" do
     attr = Attribute.name(attr(), :artist_name)
     assert attr.name == "artist_name"

@@ -1,13 +1,12 @@
 defmodule Resourceful.Type.Attribute do
+  import Map, only: [put: 3]
+
   alias __MODULE__
   alias Resourceful.Error
   alias Resourceful.Collection.Filter
 
-  import Map, only: [put: 3]
-
   @enforce_keys [
     :filter?,
-    :getter,
     :map_to,
     :name,
     :sort?,
@@ -21,7 +20,6 @@ defmodule Resourceful.Type.Attribute do
 
     %Attribute{
       filter?: opt_bool(Keyword.get(opts, :filter)),
-      getter: opt_getter(Keyword.get(opts, :getter)),
       map_to: Keyword.get(opts, :map_to) || as_atom(name),
       name: opt_name(name),
       sort?: opt_bool(Keyword.get(opts, :sort)),
@@ -48,15 +46,7 @@ defmodule Resourceful.Type.Attribute do
 
   def filter(attr, filter), do: put(attr, :filter?, opt_bool(filter))
 
-  def getter(attr, getter), do: put(attr, :getter, opt_getter(getter))
-
   def map_to(attr, map_to), do: put(attr, :map_to, map_to)
-
-  def map_value(%Attribute{getter: nil, map_to: map_to}, resource) do
-    Map.get(resource, map_to)
-  end
-
-  def map_value(%Attribute{} = attr, resource), do: attr.getter.(attr, resource)
 
   def name(attr, name), do: put(attr, :name, opt_name(name))
 
@@ -102,13 +92,9 @@ defmodule Resourceful.Type.Attribute do
 
   defp opt_name(name) when is_binary(name), do: name
 
-  defp opt_getter(nil), do: nil
-
-  defp opt_getter(func) when is_function(func, 2), do: func
-
   defp opts_with_query(opts) do
     cond do
-      Keyword.get(opts, :query) -> [filter: true, sort: true] ++ opts
+      Keyword.get(opts, :query) -> Keyword.merge(opts, filter: true, sort: true)
       true -> opts
     end
   end
