@@ -18,6 +18,10 @@ defmodule Resourceful.Collection do
 
   @default_page_size 25
 
+  @type name() :: atom() | String.t()
+
+  @type field_name() :: name() | {name(), name()}
+
   @type page_info() :: %{
           number: integer(),
           resources: integer(),

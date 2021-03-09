@@ -32,9 +32,9 @@ end
 defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
   import Ecto.Query, warn: false
 
-  def cast_filter(_, {field, op, val}), do: {to_atom(field), op, val}
+  def cast_filter(_, {field, op, val}), do: {cast_field(field), op, val}
 
-  def cast_sorter(_, {order, field}), do: {order, to_atom(field)}
+  def cast_sorter(_, {order, field}), do: {order, cast_field(field)}
 
   def collection(_), do: Resourceful.Collection.Ecto
 
@@ -49,14 +49,28 @@ defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
   def sort(queryable, sorters) do
     queryable
     |> exclude(:order_by)
-    |> order_by(^sorters)
+    |> do_sort(sorters)
   end
+
+  defp do_sort(queryable, sorters) do
+    Enum.reduce(sorters, queryable, fn sorter, q -> apply_sorter(q, sorter) end)
+  end
+
+  defp apply_sorter(queryable, {dir, {namespace, col}}) do
+    order_by(queryable, [_, {^namespace, q}], {^dir, field(q, ^col)})
+  end
+
+  defp apply_sorter(queryable, sorter), do: order_by(queryable, ^sorter)
 
   defp by_limit(queryable, limit, offset) do
     queryable
     |> limit(^limit)
     |> offset(^offset)
   end
+
+  defp cast_field({namespace, field}), do: {to_atom(namespace), to_atom(field)}
+
+  defp cast_field(field), do: to_atom(field)
 
   defp to_atom(field) when is_binary(field), do: String.to_existing_atom(field)
 

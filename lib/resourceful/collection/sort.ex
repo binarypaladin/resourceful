@@ -10,6 +10,10 @@ defmodule Resourceful.Collection.Sort do
   alias Resourceful.Collection.Delegate
   alias Resourceful.Error
 
+  @type t() :: {:asc | :desc, any()}
+
+  @type coercible() :: t() | String.t()
+
   @doc """
   Returns a data source that is sorted in accordance with `sorters`.
 

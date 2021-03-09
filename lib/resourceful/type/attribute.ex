@@ -2,7 +2,7 @@ defmodule Resourceful.Type.Attribute do
   import Map, only: [put: 3]
 
   alias __MODULE__
-  alias Resourceful.Error
+  alias Resourceful.{Error, Type}
   alias Resourceful.Collection.Filter
 
   @enforce_keys [
@@ -21,7 +21,7 @@ defmodule Resourceful.Type.Attribute do
     %Attribute{
       filter?: opt_bool(Keyword.get(opts, :filter)),
       map_to: Keyword.get(opts, :map_to) || as_atom(name),
-      name: opt_name(name),
+      name: Type.validate_name!(name),
       sort?: opt_bool(Keyword.get(opts, :sort)),
       type: as_atom(type)
     }
@@ -48,7 +48,7 @@ defmodule Resourceful.Type.Attribute do
 
   def map_to(attr, map_to), do: put(attr, :map_to, map_to)
 
-  def name(attr, name), do: put(attr, :name, opt_name(name))
+  def name(attr, name), do: put(attr, :name, Type.validate_name!(name))
 
   def query(attr, query) do
     attr
@@ -87,10 +87,6 @@ defmodule Resourceful.Type.Attribute do
   defp opt_bool(nil), do: false
 
   defp opt_bool(bool) when is_boolean(bool), do: bool
-
-  defp opt_name(name) when is_atom(name), do: to_string(name)
-
-  defp opt_name(name) when is_binary(name), do: name
 
   defp opts_with_query(opts) do
     cond do

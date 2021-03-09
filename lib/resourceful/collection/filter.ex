@@ -10,19 +10,16 @@ defmodule Resourceful.Collection.Filter do
   complete with more robust querying options provided by various databases. As
   The focus is on edge-facing APIs, generally web-based APIs, filthering is
   meant to be much simpler and more predictable. For instance, wildcard and
-  regular expression filtering is omitted specifically by default. This is quite
+  regular expression filtering are omitted specifically by default. This is
   intentional.
-
-  For more natural language-centric queries, `Resourceful.Collection.Search`
-  should be used instead so that the underlying data sources can be
-  appropriately optimized.
-
-  (`Search` doesn't exist yet and as of now, the query options are static, but
-  this will change in the future.)
   """
 
+  alias Resourceful.{Collection, Error}
   alias Resourceful.Collection.Delegate
-  alias Resourceful.Error
+
+  @type t() :: {Collection.field_name(), String.t(), any()}
+
+  @type coercible() :: t() | {String.t(), any()} | list()
 
   @shorthand %{
     "eq" => %{func: :equal},
@@ -76,6 +73,7 @@ defmodule Resourceful.Collection.Filter do
 
     cast(["age gte", 18])
   """
+
   def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
   def cast({field_and_op, val}) when is_binary(field_and_op) do
@@ -101,7 +99,7 @@ defmodule Resourceful.Collection.Filter do
         filter
 
       {:error, {_, %{filter: filter}}} ->
-        raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(filter)}"
+        raise ArgumentError, message: "Cannot cast filter: #{inspect(filter)}"
     end
   end
 
@@ -131,7 +129,7 @@ defmodule Resourceful.Collection.Filter do
 
     data_source
     |> Delegate.filters()
-    |> Kernel.apply(operator_func!(op), [data_source, field, val])
+    |> apply(operator_func!(op), [data_source, field, val])
   end
 
   defp cast_field_and_op(field_and_op) when is_binary(field_and_op) do
