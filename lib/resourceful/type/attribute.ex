@@ -39,9 +39,13 @@ defmodule Resourceful.Type.Attribute do
   end
 
   defp do_cast(name, type, input, cast_as_list) do
-    cast_type = if cast_as_list, do: {:array, type}, else: type
+    {type, input} =
+      case cast_as_list do
+        true -> {{:array, type}, List.wrap(input)}
+        _ -> {type, input}
+      end
 
-    case Ecto.Type.cast(cast_type, input) do
+    case Ecto.Type.cast(type, input) do
       {:ok, _} = ok ->
         ok
 
