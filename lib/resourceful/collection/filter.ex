@@ -103,6 +103,10 @@ defmodule Resourceful.Collection.Filter do
     end
   end
 
+  def cast_as_list?(op) when op in ["ex", "in"], do: true
+
+  def cast_as_list?(_), do: false
+
   @doc """
   Checks whether or not an operator is valid.
 

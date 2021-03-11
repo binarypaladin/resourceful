@@ -9,9 +9,9 @@ end
 defimpl Resourceful.Collection.Delegate, for: List do
   alias Resourceful.Collection.List
 
-  def cast_filter(_, filter), do: filter
+  def cast_filter(_, {field, op, val}), do: {cast_field(field), op, val}
 
-  def cast_sorter(_, sorter), do: sorter
+  def cast_sorter(_, {order, field}), do: {order, cast_field(field)}
 
   def collection(_), do: List
 
@@ -24,4 +24,10 @@ defimpl Resourceful.Collection.Delegate, for: List do
   def sort(list, sorters) when sorters in [nil, [], ""], do: list
 
   def sort(list, sorters), do: List.Sort.call(list, sorters)
+
+  defp cast_field(%{map_to: map_to}), do: cast_field(map_to)
+
+  defp cast_field(field) when is_list(field), do: Enum.map(field, &Access.key/1)
+
+  defp cast_field(field), do: field
 end

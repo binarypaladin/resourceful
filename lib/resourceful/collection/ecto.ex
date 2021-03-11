@@ -9,7 +9,6 @@ defmodule Resourceful.Collection.Ecto do
 
   import Ecto.Query, only: [limit: 2], warn: false
 
-  alias Resourceful.Collection.Ecto.NoRepoError
 
   def all(queryable, opts), do: repo(opts).all(queryable)
 
@@ -67,6 +66,10 @@ defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
     |> limit(^limit)
     |> offset(^offset)
   end
+
+  defp cast_field(%{query_alias: query_alias}), do: query_alias
+
+  defp cast_field(%{map_to: map_to}), do: map_to
 
   defp cast_field({namespace, field}), do: {to_atom(namespace), to_atom(field)}
 

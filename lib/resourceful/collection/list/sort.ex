@@ -34,9 +34,13 @@ defmodule Resourceful.Collection.List.Sort do
     |> to_sorters(all ++ [to_sorter(sorters)])
   end
 
-  defp apply_sorter({op, key}, x, y) do
-    apply(__MODULE__, op, [Map.get(x, key), Map.get(y, key)])
+  defp apply_sorter({op, keys}, x, y) do
+    apply(__MODULE__, op, [get_val(x, keys), get_val(y, keys)])
   end
+
+  defp get_val(resource, keys) when is_list(keys), do: get_in(resource, keys)
+
+  defp get_val(resource, keys), do: Map.get(resource, keys)
 
   defp sort_with_sorters(sorters, x, y), do: Enum.all?(sorters, &apply_sorter(&1, x, y))
 end

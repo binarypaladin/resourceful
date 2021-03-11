@@ -18,7 +18,6 @@ defmodule Resourceful.Type.GraphedField do
 
   @enforce_keys [
     :field,
-    :list_name,
     :map_to,
     :name,
     :query_alias
@@ -33,7 +32,6 @@ defmodule Resourceful.Type.GraphedField do
   def new(field, name, map_to, parent \\ nil) do
     %GraphedField{
       field: field,
-      list_name: String.split(name, "."),
       map_to: map_to,
       name: name,
       parent: parent,

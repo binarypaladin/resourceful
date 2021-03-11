@@ -192,13 +192,22 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-  Fetches a field by name.
+  Fetches a local attribute or, if a registry is set, a graphed attribute.
   """
-  @spec fetch_field(%Type{}, field_name()) :: {:ok, field()} | Error.t()
-  def fetch_field(type, name) do
-    with {:ok, %{field: field}} <- fetch_graphed_field(type, name),
-         do: {:ok, field}
+  @spec fetch_attribute(%Type{}, field_name()) :: {:ok, %Attribute{} | %GraphedField{}} | Error.t()
+  def fetch_attribute(%{registry: nil} = type, name) do
+    fetch_local_attribute(type, name)
   end
+
+  def fetch_attribute(type, name), do: fetch_graphed_attribute(type, name)
+
+  @doc """
+  Fetches a local field or, if a registry is set, a graphed field.
+  """
+  @spec fetch_field(%Type{}, field_name()) :: {:ok, field() | %GraphedField{}} | Error.t()
+  def fetch_field(%{registry: nil} = type, name), do: fetch_local_field(type, name)
+
+  def fetch_field(type, name), do: fetch_graphed_field(type, name)
 
   @doc """
   Same as `fetch_graphed_field/2` except it will _only_ return attributes rather
@@ -240,6 +249,28 @@ defmodule Resourceful.Type do
   def fetch_graphed_field!(type, name) do
     {:ok, graphed_field} = fetch_graphed_field(type, name)
     graphed_field
+  end
+
+   @doc """
+  Fetches a local attribute by name.
+  """
+  @spec fetch_local_attribute(%Type{}, field_name()) :: {:ok, %Attribute{}} | Error.t()
+  def fetch_local_attribute(type, name) do
+    case fetch_field(type, name) do
+      {:ok, %Attribute{}} = ok -> ok
+      _ -> field_error(:attribute_not_found, type, name)
+    end
+  end
+
+  @doc """
+  Fetches a local field by name.
+  """
+  @spec fetch_local_field(%Type{}, String.t()) :: {:ok, field()} | Error.t()
+  def fetch_local_field(type, name) do
+    case Map.fetch(type.fields, name) do
+      :error -> field_error(:field_not_found, type, name)
+      ok -> ok
+    end
   end
 
   @doc """
@@ -413,11 +444,11 @@ defmodule Resourceful.Type do
   @doc """
   Validates a single filter on an attribute.
   """
-  @spec validate_filter(%Type{}, any()) :: Error.t() | {:ok, Filter.t()}
+  @spec validate_filter(%Type{}, any()) :: {:ok, Filter.t()} | Error.t()
   def validate_filter(type, filter) do
-    with {:ok, {field, op, val}} <- Filter.cast(filter),
-         {:ok, _} <- map_field(type, field),
-         {:ok, _} = ok <- Attribute.validate_filter(field, op, val),
+    with {:ok, {field_name, op, val}} <- Filter.cast(filter),
+         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
+         {:ok, _} = ok <- Attribute.validate_filter(attr_or_graph, op, val),
          do: ok
   end
 
@@ -440,11 +471,11 @@ defmodule Resourceful.Type do
   @doc """
   Validates a single sorter on an attribute.
   """
-  @spec validate_sorter(%Type{}, any()) :: Error.t() | {:ok, Sort.t()}
+  @spec validate_sorter(%Type{}, any()) :: {:ok, Sort.t()} | Error.t()
   def validate_sorter(type, sorter) do
-    with {:ok, {order, field}} <- Sort.cast(sorter),
-         {:ok, _} <- map_field(type, field),
-         {:ok, _} = ok <- Attribute.validate_sorter(field, order),
+    with {:ok, {order, field_name}} <- Sort.cast(sorter),
+         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
+         {:ok, _} = ok <- Attribute.validate_sorter(attr_or_graph, order),
          do: ok
   end
 
