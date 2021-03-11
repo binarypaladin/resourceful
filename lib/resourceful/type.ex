@@ -208,7 +208,9 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-
+  Same as `fetch_graphed_field/2` except it will _only_ return attributes rather
+  than any field. Queries work on attributes and not resources, so in those
+  cases, this should be used.
   """
   @spec fetch_graphed_attribute(%Type{}, field_name()) :: {:ok, graphed_field()} | Error.t()
   def fetch_graphed_attribute(type, name) do
@@ -221,7 +223,7 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-
+  Fetches a field with related graph data using the resource's field graphs.
   """
   @spec fetch_graphed_field(%Type{}, field_name()) :: {:ok, graphed_field()} | Error.t()
   def fetch_graphed_field(type, name) when is_list(name) do
@@ -237,15 +239,15 @@ defmodule Resourceful.Type do
     end
   end
 
-
   @doc """
-
+  Same as `fetch_graphed_field/2` but raises a `KeyError` if the graphed field
+  isn't present.
   """
+  @spec fetch_graphed_field!(%Type{}, field_name()) :: graphed_field()}
   def fetch_graphed_field!(type, name) do
     {:ok, graphed_field} = fetch_graphed_field(type, name)
     graphed_field
   end
-
 
   @doc """
   Fetches another type by name from a type's registry.
@@ -259,11 +261,21 @@ defmodule Resourceful.Type do
     with {:ok, registry} <- fetch_registry(type), do: registry.fetch(type_name)
   end
 
+  @doc """
+  Fetches the field graph for a given type if the type exists and has a
+  registry.
+  """
   @spec field_graph(%Type{}) :: field_graph()
   def field_graph(type) do
     with {:ok, registry} <- fetch_registry(type),
          do: registry.fetch_field_graph(type.name)
   end
+
+  @doc """
+  Checks if a type has a local field.
+  """
+  @spec has_field?(%Type{}, String.t()) :: boolean()
+  def has_field?(%Type{} = type, name), do: Map.has_key?(type.fields, name)
 
   @doc """
   Sets the attribute to be used as the ID attribute for a given type. The ID
@@ -275,12 +287,6 @@ defmodule Resourceful.Type do
   """
   @spec id(%Type{}, String.t()) :: %Type{}
   def id(type, id_attribute), do: put(type, :id, opt_id(id_attribute))
-
-  @doc """
-  Checks if a type has a local field.
-  """
-  @spec has_field?(%Type{}, String.t()) :: boolean()
-  def has_field?(%Type{} = type, name), do: Map.has_key?(type.fields, name)
 
   @doc """
   Validates and returns the mapped names from a graph given in field form.
