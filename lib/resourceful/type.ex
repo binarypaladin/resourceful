@@ -74,6 +74,10 @@ defmodule Resourceful.Type do
   The query format is specifically limited for this purpose.
   """
 
+  defmodule FieldError do
+    defexception message: "field could not be found"
+  end
+
   defmodule InvalidName do
     defexception message: "names cannot contain periods (\".\")"
   end
@@ -193,12 +197,20 @@ defmodule Resourceful.Type do
   @doc """
   Fetches a local attribute or, if a registry is set, a graphed attribute.
   """
-  @spec fetch_attribute(%Type{}, field_name()) :: {:ok, %Attribute{} | %GraphedField{}} | Error.t()
+  @spec fetch_attribute(%Type{}, field_name()) ::
+          {:ok, %Attribute{} | %GraphedField{}} | Error.t()
   def fetch_attribute(%{registry: nil} = type, name) do
     fetch_local_attribute(type, name)
   end
 
   def fetch_attribute(type, name), do: fetch_graphed_attribute(type, name)
+
+  @doc """
+  Same as `fetch_attribute/2` but raises `FieldError` if the attribute isn't
+  present.
+  """
+  @spec fetch_attribute!(%Type{}, field_name()) :: %Attribute{}
+  def fetch_attribute!(type, name), do: fetch!(name, fetch_attribute(type, name))
 
   @doc """
   Fetches a local field or, if a registry is set, a graphed field.
@@ -207,6 +219,12 @@ defmodule Resourceful.Type do
   def fetch_field(%{registry: nil} = type, name), do: fetch_local_field(type, name)
 
   def fetch_field(type, name), do: fetch_graphed_field(type, name)
+
+  @doc """
+  Same as `fetch_field/2` but raises `FieldError` if the field isn't present.
+  """
+  @spec fetch_field!(%Type{}, field_name()) :: field() | %GraphedField{}
+  def fetch_field!(type, name), do: fetch!(name, fetch_field(type, name))
 
   @doc """
   Same as `fetch_graphed_field/2` except it will _only_ return attributes rather
@@ -222,6 +240,13 @@ defmodule Resourceful.Type do
       end
     end
   end
+
+  @doc """
+  Same as `fetch_graphed_attribute/2` but raises `FieldError` if the graphed
+  attribute isn't present.
+  """
+  @spec fetch_graphed_attribute!(%Type{}, field_name()) :: %GraphedField{}
+  def fetch_graphed_attribute!(type, name), do: fetch!(name, fetch_graphed_attribute(type, name))
 
   @doc """
   Fetches a field with related graph data using the resource's field graphs.
@@ -241,14 +266,11 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-  Same as `fetch_graphed_field/2` but raises a `KeyError` if the graphed field
+  Same as `fetch_graphed_field/2` but raises `FieldError` if the graphed field
   isn't present.
   """
   @spec fetch_graphed_field!(%Type{}, field_name()) :: %GraphedField{}
-  def fetch_graphed_field!(type, name) do
-    {:ok, graphed_field} = fetch_graphed_field(type, name)
-    graphed_field
-  end
+  def fetch_graphed_field!(type, name), do: fetch!(name, fetch_graphed_field(type, name))
 
   @doc """
   Fetches a local attribute by name.
@@ -262,6 +284,13 @@ defmodule Resourceful.Type do
   end
 
   @doc """
+  Same as `fetch_local_attribute/2` but raises `FieldError` if the local field
+  isn't present.
+  """
+  @spec fetch_local_attribute!(%Type{}, field_name()) :: %Attribute{}
+  def fetch_local_attribute!(type, name), do: fetch!(name, fetch_local_attribute(type, name))
+
+  @doc """
   Fetches a local field by name.
   """
   @spec fetch_local_field(%Type{}, String.t()) :: {:ok, field()} | Error.t()
@@ -271,6 +300,13 @@ defmodule Resourceful.Type do
       ok -> ok
     end
   end
+
+  @doc """
+  Same as `fetch_local_field/2` but raises `FieldError` if the local field isn't
+  present.
+  """
+  @spec fetch_local_field!(%Type{}, field_name()) :: %GraphedField{}
+  def fetch_local_field!(type, name), do: fetch!(name, fetch_local_field(type, name))
 
   @doc """
   Fetches another type by name from a type's registry.
@@ -506,6 +542,12 @@ defmodule Resourceful.Type do
   end
 
   defp check_max(list, _, _, _), do: list
+
+  defp fetch!(_, {:ok, ok}), do: ok
+
+  defp fetch!(name, {:error}) do
+    raise FieldError, message: "field #{inspect(name)} not found"
+  end
 
   defp fetch_registry(%{registry: nil} = type) do
     type_error(:no_type_registry, type)
