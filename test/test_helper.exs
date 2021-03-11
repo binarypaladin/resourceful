@@ -25,11 +25,15 @@ _ = Ecto.Adapters.Postgres.storage_down(Repo.config())
 
 Code.require_file("support/migrations.exs", __DIR__)
 
-:ok = Ecto.Migrator.up(Repo, 0, Resourceful.Test.Repo.Migrations.CreateAlbums, log: false)
+:ok = Ecto.Migrator.up(Repo, 0, Resourceful.Test.Repo.Migrations.CreateArtists, log: false)
+:ok = Ecto.Migrator.up(Repo, 1, Resourceful.Test.Repo.Migrations.CreateAlbums, log: false)
+:ok = Ecto.Migrator.up(Repo, 2, Resourceful.Test.Repo.Migrations.CreateSongs, log: false)
+
 Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)
 Process.flag(:trap_exit, true)
 
 Code.require_file("support/schemas.exs", __DIR__)
 Code.require_file("support/fixtures.exs", __DIR__)
+Code.require_file("support/types.exs", __DIR__)
 Code.require_file("support/helpers.exs", __DIR__)
 Code.require_file("support/database_case.exs", __DIR__)
