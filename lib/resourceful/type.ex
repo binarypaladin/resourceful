@@ -248,7 +248,7 @@ defmodule Resourceful.Type do
     graphed_field
   end
 
-   @doc """
+  @doc """
   Fetches a local attribute by name.
   """
   @spec fetch_local_attribute(%Type{}, field_name()) :: {:ok, %Attribute{}} | Error.t()
@@ -489,7 +489,7 @@ defmodule Resourceful.Type do
   end
 
   def validate_name!(name) when is_binary(name) do
-    if String.match?(name, ~r/\./), do: raise InvalidName
+    if String.match?(name, ~r/\./), do: raise(InvalidName)
     name
   end
 

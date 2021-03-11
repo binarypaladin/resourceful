@@ -281,7 +281,7 @@ defmodule Resourceful.Error do
   end
 
   defp do_from_changeset({source, {detail, context_list}}, %{} = data)
-      when is_atom(source) do
+       when is_atom(source) do
     context_list
     |> Map.new()
     |> Map.merge(%{

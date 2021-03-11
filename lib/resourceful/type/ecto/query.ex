@@ -96,7 +96,7 @@ defmodule Resourceful.Type.Ecto.Query do
 
         {postition, child_assocs} ->
           {postition, build_new_preloads(path, child_assocs, aliases)}
-    end
+      end
 
     Keyword.put(assocs, assoc_name, child)
   end
@@ -166,10 +166,10 @@ defmodule Resourceful.Type.Ecto.Query do
   end
 
   defp named_join(
-    queryable,
-    %{field: field, parent: %{query_alias: {parent_alias, _}}},
-    join_as
-  ) do
+         queryable,
+         %{field: field, parent: %{query_alias: {parent_alias, _}}},
+         join_as
+       ) do
     queryable
     |> join(:left, [_, {^parent_alias, p}], assoc(p, ^field.map_to))
     |> alias_last_join(join_as)

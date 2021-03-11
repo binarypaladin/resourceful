@@ -47,7 +47,7 @@ defmodule Resourceful.Collection.List.SortTest do
 
   test "converts base sorter to an expanded line of sorters" do
     assert Sort.to_sorter(sorters()) ==
-      [eq: ["artist", "name"], eq: "tracks", asc: "title"]
+             [eq: ["artist", "name"], eq: "tracks", asc: "title"]
   end
 
   test "converts base sorters to list sorters" do

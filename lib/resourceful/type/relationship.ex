@@ -67,5 +67,3 @@ defmodule Resourceful.Type.Relationship do
 
   defp opt_name(name) when is_binary(name), do: name
 end
-
-

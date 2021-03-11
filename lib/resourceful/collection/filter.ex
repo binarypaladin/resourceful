@@ -75,7 +75,6 @@ defmodule Resourceful.Collection.Filter do
 
     cast(["age gte", 18])
   """
-
   def cast({field, op, val}) when is_binary(op), do: {:ok, {field, op, val}}
 
   def cast({field_and_op, val}) when is_binary(field_and_op) do
