@@ -85,7 +85,7 @@ defmodule Resourceful.Registry do
       new_map_to = map_to_prefix ++ [field.map_to]
       new_name = qualify_name(name_prefix, name)
 
-      field_data = field_data(field, parent, new_name, new_map_to)
+      field_data = Type.GraphedField.new(field, new_name, new_map_to, parent)
 
       new_field_graph = Map.put(new_field_graph, new_name, field_data)
 
@@ -107,43 +107,9 @@ defmodule Resourceful.Registry do
     end)
   end
 
-  defp field_data(field, parent, name, map_to) do
-    %{
-      field: field,
-      list_name: String.split(name, "."),
-      map_to: map_to,
-      name: name,
-      parent: parent,
-      query_alias: query_alias_with(map_to, field)
-    }
-  end
-
-  defp maybe_atomize([]), do: nil
-
-  defp maybe_atomize(map_to) do
-    map_to
-    |> Enum.map(&to_string/1)
-    |> Enum.join(".")
-    |> String.to_atom()
-  end
-
   defp qualify_name(nil, name), do: name
 
   defp qualify_name(prefix, name), do: "#{prefix}.#{name}"
-
-  defp query_alias_with(map_to, %Type.Attribute{map_to: attr_map_to}) do
-    map_to
-    |> Enum.drop(-1)
-    |> query_alias_with(attr_map_to)
-  end
-
-  defp query_alias_with(map_to, %Type.Relationship{}) do
-    query_alias_with(map_to, nil)
-  end
-
-  defp query_alias_with(map_to, attr_name) do
-    {maybe_atomize(map_to), attr_name}
-  end
 
   @doc """
 

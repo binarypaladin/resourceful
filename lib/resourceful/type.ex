@@ -81,7 +81,7 @@ defmodule Resourceful.Type do
   import Map, only: [put: 3]
 
   alias __MODULE__
-  alias __MODULE__.{Attribute, Relationship}
+  alias __MODULE__.{Attribute, GraphedField, Relationship}
   alias Resourceful.Error
   alias Resourceful.Collection.{Filter, Sort}
 
@@ -91,16 +91,9 @@ defmodule Resourceful.Type do
   """
   @type field() :: %Attribute{} | %Relationship{}
 
-  @type field_graph() :: %{String.t() => graphed_field()}
+  @type field_graph() :: %{String.t() => %GraphedField{}}
 
   @type field_name() :: String.t() | [String.t()]
-
-  @type graphed_field() :: %{
-          field: field(),
-          list_name: [String.t()],
-          map_to: [atom() | String.t()],
-          name: String.t()
-        }
 
   @enforce_keys [
     :cache,
@@ -212,7 +205,7 @@ defmodule Resourceful.Type do
   than any field. Queries work on attributes and not resources, so in those
   cases, this should be used.
   """
-  @spec fetch_graphed_attribute(%Type{}, field_name()) :: {:ok, graphed_field()} | Error.t()
+  @spec fetch_graphed_attribute(%Type{}, field_name()) :: {:ok, %GraphedField{}} | Error.t()
   def fetch_graphed_attribute(type, name) do
     with {:ok, graphed} <- fetch_graphed_field(type, name) do
       case graphed.field do
@@ -225,7 +218,7 @@ defmodule Resourceful.Type do
   @doc """
   Fetches a field with related graph data using the resource's field graphs.
   """
-  @spec fetch_graphed_field(%Type{}, field_name()) :: {:ok, graphed_field()} | Error.t()
+  @spec fetch_graphed_field(%Type{}, field_name()) :: {:ok, %GraphedField{}} | Error.t()
   def fetch_graphed_field(type, name) when is_list(name) do
     fetch_graphed_field(type, string_name(name))
   end
@@ -243,7 +236,7 @@ defmodule Resourceful.Type do
   Same as `fetch_graphed_field/2` but raises a `KeyError` if the graphed field
   isn't present.
   """
-  @spec fetch_graphed_field!(%Type{}, field_name()) :: graphed_field()}
+  @spec fetch_graphed_field!(%Type{}, field_name()) :: %GraphedField{}
   def fetch_graphed_field!(type, name) do
     {:ok, graphed_field} = fetch_graphed_field(type, name)
     graphed_field
@@ -308,7 +301,7 @@ defmodule Resourceful.Type do
   @doc """
   Maps a value for a given field name for a resource.
   """
-  @spec map_value(resource, %Type{}, field_name()) :: any()
+  @spec map_value(map(), %Type{}, field_name()) :: any()
   def map_value(resource, %Type{} = type, name) do
     case map_field(type, name) do
       {:ok, path} -> get_with_path(resource, path)
@@ -332,7 +325,7 @@ defmodule Resourceful.Type do
   of a map to preserve the order of the input list. If order is irrelevant, use
   `to_map/2` instead.
   """
-  @spec map_values(%Type{}, any(), [field_name()]) :: [{any(), any()}]
+  @spec map_values(map(), %Type{}, [field_name()]) :: [{any(), any()}]
   def map_values(resource, type, fields \\ [])
 
   def map_values(resource, type, []) do

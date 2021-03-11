@@ -119,7 +119,7 @@ defmodule Resourceful.Type.Ecto.Query do
   Fields resolving to attributes are ignored, but if they are children of a
   relationship, the relationship will be included.
   """
-  @spec join_field(any(), Type.graphed_field()) :: %Ecto.Query{}
+  @spec join_field(any(), %Type.GraphedField{}) :: %Ecto.Query{}
   def join_field(queryable, graphed_field) do
     join_graph(queryable, graph_path(graphed_field))
   end
