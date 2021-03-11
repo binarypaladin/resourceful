@@ -277,6 +277,12 @@ defmodule Resourceful.Type do
   def id(type, id_attribute), do: put(type, :id, opt_id(id_attribute))
 
   @doc """
+  Checks if a type has a local field.
+  """
+  @spec has_field?(%Type{}, String.t()) :: boolean()
+  def has_field?(%Type{} = type, name), do: Map.has_key?(type.fields, name)
+
+  @doc """
   Validates and returns the mapped names from a graph given in field form.
   """
   @spec map_field(%Type{}, field_name()) ::
