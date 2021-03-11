@@ -9,7 +9,6 @@ defmodule Resourceful.Collection.Ecto do
 
   import Ecto.Query, only: [limit: 2], warn: false
 
-
   def all(queryable, opts), do: repo(opts).all(queryable)
 
   def any?(queryable, opts) do
@@ -73,7 +72,36 @@ defimpl Resourceful.Collection.Delegate, for: Ecto.Query do
 
   defp cast_field({namespace, field}), do: {to_atom(namespace), to_atom(field)}
 
-  defp cast_field(field), do: to_atom(field)
+  defp cast_field(field) when is_atom(field), do: field
+
+  defp cast_field(field)
+       when is_list(field) and length(field) == 1,
+       do: to_atom(hd(field))
+
+  defp cast_field(field) when is_list(field) do
+    {
+      field
+      |> Stream.drop(-1)
+      |> Stream.map(&to_string/1)
+      |> Enum.join(".")
+      |> to_atom(),
+      field
+      |> List.last()
+      |> to_atom
+    }
+  end
+
+  defp cast_field(field) when is_binary(field) do
+    case String.contains?(field, ".") do
+      true ->
+        field
+        |> String.split(".")
+        |> cast_field()
+
+      _ ->
+        to_atom(field)
+    end
+  end
 
   defp to_atom(field) when is_binary(field), do: String.to_existing_atom(field)
 

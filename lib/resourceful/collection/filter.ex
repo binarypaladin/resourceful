@@ -33,6 +33,8 @@ defmodule Resourceful.Collection.Filter do
     "sw" => %{func: :starts_with, only: [:string]}
   }
 
+  @default_op "eq"
+
   @doc """
   Returns a data source that is filtered in accordance with `filters`.
 
@@ -83,6 +85,10 @@ defmodule Resourceful.Collection.Filter do
     |> cast()
   end
 
+  def cast({field, val}) when is_list(field) do
+    cast({field, @default_op, val})
+  end
+
   def cast([field_and_op, val]), do: cast({field_and_op, val})
 
   def cast(filter) when is_list(filter) and length(filter) == 3 do
@@ -103,6 +109,7 @@ defmodule Resourceful.Collection.Filter do
     end
   end
 
+  @spec cast_as_list?(String.t()) :: boolean()
   def cast_as_list?(op) when op in ["ex", "in"], do: true
 
   def cast_as_list?(_), do: false
