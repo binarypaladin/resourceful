@@ -95,6 +95,8 @@ defmodule Resourceful.Type do
 
   @type field_name() :: String.t() | [String.t()]
 
+  @type queryable() :: %Attribute{} | %GraphedField{field: %Attribute{}}
+
   @enforce_keys [
     :cache,
     :fields,

@@ -17,7 +17,7 @@ defmodule Resourceful.Collection.Filter do
   alias Resourceful.{Collection, Error}
   alias Resourceful.Collection.Delegate
 
-  @type t() :: {Collection.field_name(), String.t(), any()}
+  @type t() :: {Collection.queryable(), String.t(), any()}
 
   @type coercible() :: t() | {String.t(), any()} | list()
 
@@ -108,6 +108,9 @@ defmodule Resourceful.Collection.Filter do
     end
   end
 
+  @doc """
+
+  """
   @spec cast_as_list?(String.t()) :: boolean()
   def cast_as_list?(op) when op in ["ex", "in"], do: true
 
@@ -148,7 +151,7 @@ defmodule Resourceful.Collection.Filter do
     |> cast_field_and_op()
   end
 
-  defp cast_field_and_op([field | []]), do: [field, "eq"]
+  defp cast_field_and_op([field | []]), do: [field, @default_op]
 
   defp cast_field_and_op(field_and_op), do: field_and_op
 

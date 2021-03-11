@@ -10,7 +10,7 @@ defmodule Resourceful.Collection.Sort do
   alias Resourceful.Collection.Delegate
   alias Resourceful.Error
 
-  @type t() :: {:asc | :desc, any()}
+  @type t() :: {:asc | :desc, Resourceful.Collection.queryable()}
 
   @type coercible() :: t() | String.t()
 
@@ -30,6 +30,7 @@ defmodule Resourceful.Collection.Sort do
       - `"name,-age"`
       - `["+name", "-age"]`
   """
+  @spec call(any(), coercible() | [coercible()]) :: any()
   def call(data_source, sorters) do
     sorters =
       sorters

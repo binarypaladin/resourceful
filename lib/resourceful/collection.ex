@@ -20,7 +20,7 @@ defmodule Resourceful.Collection do
 
   @type name() :: atom() | String.t()
 
-  @type field_name() :: name() | {name(), name()}
+  @type queryable() :: name() | {name(), name()} | Resourceful.Type.queryable()
 
   @type page_info() :: %{
           number: integer(),
