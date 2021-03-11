@@ -117,13 +117,12 @@ defmodule Resourceful.Type do
   """
   @spec new(String.t(), keyword()) :: %Type{}
   def new(name, opts \\ []) do
-    attributes = opt_attrs(Keyword.get(opts, :attributes, []))
-    relationships = opt_rels(Keyword.get(opts, :relationships, []))
+    fields = opt_fields(Keyword.get(opts, :fields, []))
 
     %Type{
       cache: %{},
-      fields: Map.merge(attributes, relationships),
-      id: opt_id(Keyword.get(opts, :id, default_id(attributes))),
+      fields: fields,
+      id: opt_id(Keyword.get(opts, :id, default_id(fields))),
       meta: opt_meta(Keyword.get(opts, :meta, %{})),
       max_depth: opt_max(Keyword.get(opts, :max_depth, 1)),
       max_filters: opt_max(Keyword.get(opts, :max_filters, 4)),
@@ -132,20 +131,24 @@ defmodule Resourceful.Type do
     }
   end
 
-  defp default_id(%{"id" => _}), do: "id"
+  defp default_id(%{"id" => %Attribute{}}), do: "id"
 
   defp default_id(_), do: nil
 
-  defp opt_attr(%Attribute{} = attr), do: attr
+  defp opt_field(%mod{} = field)
+       when mod in [Attribute, Relationship],
+       do: field
 
-  defp opt_attr({_, _} = name_and_attr), do: opt_with_name(name_and_attr)
+  defp opt_fields(%{} = fields) do
+    fields
+    |> Map.values()
+    |> opt_fields()
+  end
 
-  defp opt_attrs(attrs), do: opt_fields(attrs, &opt_attr/1)
-
-  defp opt_fields(attrs_or_rels, func) do
-    attrs_or_rels
-    |> Enum.map(func)
-    |> Enum.reduce(%{}, fn rel, map -> put(map, rel.name, rel) end)
+  defp opt_fields(fields) do
+    fields
+    |> Enum.map(&opt_field/1)
+    |> Enum.reduce(%{}, fn field, map -> put(map, field.name, field) end)
   end
 
   defp opt_id(nil), do: nil
@@ -161,12 +164,6 @@ defmodule Resourceful.Type do
   defp opt_max(int) when is_integer(int) and int >= 0, do: int
 
   defp opt_meta(%{} = map), do: map
-
-  defp opt_rel(%Relationship{} = rel), do: rel
-
-  defp opt_rel({_, _} = name_and_rel), do: opt_with_name(name_and_rel)
-
-  defp opt_rels(rels), do: opt_fields(rels, &opt_rel/1)
 
   defp opt_with_name({new_name, %{name: current_name} = attr_or_rel}) do
     case new_name == current_name do
