@@ -29,5 +29,17 @@ defimpl Resourceful.Collection.Delegate, for: List do
 
   defp cast_field(field) when is_list(field), do: Enum.map(field, &Access.key/1)
 
+  defp cast_field(field) when is_binary(field) do
+    case String.contains?(field, ".") do
+      true ->
+        field
+        |> String.split(".")
+        |> cast_field()
+
+      _ ->
+        field
+    end
+  end
+
   defp cast_field(field), do: field
 end
