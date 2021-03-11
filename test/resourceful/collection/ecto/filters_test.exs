@@ -4,14 +4,14 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   alias Resourceful.Collection.Ecto.Filters
 
   test "equals" do
-    assert Album
-           |> Filters.equal(:artist, "Queen")
+    assert Fixtures.albums_with_artist()
+           |> Filters.equal({:artist, :name}, "Queen")
            |> ids() == [5]
   end
 
   test "exclude" do
-    assert Album
-           |> Filters.exclude(:artist, ["David Bowie", "Duran Duran"])
+    assert Fixtures.albums_with_artist()
+           |> Filters.exclude({:artist, :name}, ["David Bowie", "Duran Duran"])
            |> ids() == [2, 5, 9]
 
     assert Album
@@ -70,14 +70,14 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
   end
 
   test "not equal" do
-    assert Album
-           |> Filters.not_equal(:artist, "David Bowie")
+    assert Fixtures.albums_with_artist()
+           |> Filters.not_equal({:artist, :name}, "David Bowie")
            |> ids() == [2, 3, 5, 6, 8, 9, 10, 12, 14]
   end
 
   test "starts with" do
-    assert Album
-           |> Filters.starts_with(:artist, "Warr")
+    assert Fixtures.albums_with_artist()
+           |> Filters.starts_with({:artist, :name}, "Warr")
            |> ids() == [2]
   end
 end

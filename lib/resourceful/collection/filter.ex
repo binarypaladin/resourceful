@@ -10,19 +10,16 @@ defmodule Resourceful.Collection.Filter do
   complete with more robust querying options provided by various databases. As
   The focus is on edge-facing APIs, generally web-based APIs, filthering is
   meant to be much simpler and more predictable. For instance, wildcard and
-  regular expression filtering is omitted specifically by default. This is quite
+  regular expression filtering are omitted specifically by default. This is
   intentional.
-
-  For more natural language-centric queries, `Resourceful.Collection.Search`
-  should be used instead so that the underlying data sources can be
-  appropriately optimized.
-
-  (`Search` doesn't exist yet and as of now, the query options are static, but
-  this will change in the future.)
   """
 
+  alias Resourceful.{Collection, Error}
   alias Resourceful.Collection.Delegate
-  alias Resourceful.Error
+
+  @type t() :: {Collection.queryable(), String.t(), any()}
+
+  @type coercible() :: t() | {String.t(), any()} | list()
 
   @shorthand %{
     "eq" => %{func: :equal},
@@ -35,6 +32,8 @@ defmodule Resourceful.Collection.Filter do
     "not" => %{func: :not_equal},
     "sw" => %{func: :starts_with, only: [:string]}
   }
+
+  @default_op "eq"
 
   @doc """
   Returns a data source that is filtered in accordance with `filters`.
@@ -85,6 +84,10 @@ defmodule Resourceful.Collection.Filter do
     |> cast()
   end
 
+  def cast({field, val}) when is_list(field) do
+    cast({field, @default_op, val})
+  end
+
   def cast([field_and_op, val]), do: cast({field_and_op, val})
 
   def cast(filter) when is_list(filter) and length(filter) == 3 do
@@ -101,9 +104,17 @@ defmodule Resourceful.Collection.Filter do
         filter
 
       {:error, {_, %{filter: filter}}} ->
-        raise ArgumentError, message: "Cannot cast filter: #{Kernel.inspect(filter)}"
+        raise ArgumentError, message: "Cannot cast filter: #{inspect(filter)}"
     end
   end
+
+  @doc """
+
+  """
+  @spec cast_as_list?(String.t()) :: boolean()
+  def cast_as_list?(op) when op in ["ex", "in"], do: true
+
+  def cast_as_list?(_), do: false
 
   @doc """
   Checks whether or not an operator is valid.
@@ -131,7 +142,7 @@ defmodule Resourceful.Collection.Filter do
 
     data_source
     |> Delegate.filters()
-    |> Kernel.apply(operator_func!(op), [data_source, field, val])
+    |> apply(operator_func!(op), [data_source, field, val])
   end
 
   defp cast_field_and_op(field_and_op) when is_binary(field_and_op) do
@@ -140,7 +151,7 @@ defmodule Resourceful.Collection.Filter do
     |> cast_field_and_op()
   end
 
-  defp cast_field_and_op([field | []]), do: [field, "eq"]
+  defp cast_field_and_op([field | []]), do: [field, @default_op]
 
   defp cast_field_and_op(field_and_op), do: field_and_op
 

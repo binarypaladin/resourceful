@@ -8,13 +8,13 @@ defmodule Resourceful.Collection.List.FiltersTest do
 
   test "equals" do
     assert Fixtures.albums()
-           |> Filters.equal("artist", "Queen")
+           |> Filters.equal(["artist", "name"], "Queen")
            |> ids() == [5]
   end
 
   test "exclude" do
     assert Fixtures.albums()
-           |> Filters.exclude("artist", ["David Bowie", "Duran Duran"])
+           |> Filters.exclude(["artist", "name"], ["David Bowie", "Duran Duran"])
            |> ids() == [2, 5, 9]
 
     assert Fixtures.albums()
@@ -74,13 +74,13 @@ defmodule Resourceful.Collection.List.FiltersTest do
 
   test "not equal" do
     assert Fixtures.albums()
-           |> Filters.not_equal("artist", "David Bowie")
+           |> Filters.not_equal(["artist", "name"], "David Bowie")
            |> ids() == [2, 3, 5, 6, 8, 9, 10, 12, 14]
   end
 
   test "starts with" do
     assert Fixtures.albums()
-           |> Filters.starts_with("artist", "Warr")
+           |> Filters.starts_with(["artist", "name"], "Warr")
            |> ids() == [2]
   end
 end

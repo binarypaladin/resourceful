@@ -10,6 +10,10 @@ defmodule Resourceful.Collection.Sort do
   alias Resourceful.Collection.Delegate
   alias Resourceful.Error
 
+  @type t() :: {:asc | :desc, Resourceful.Collection.queryable()}
+
+  @type coercible() :: t() | String.t()
+
   @doc """
   Returns a data source that is sorted in accordance with `sorters`.
 
@@ -26,6 +30,7 @@ defmodule Resourceful.Collection.Sort do
       - `"name,-age"`
       - `["+name", "-age"]`
   """
+  @spec call(any(), coercible() | [coercible()]) :: any()
   def call(data_source, sorters) do
     sorters =
       sorters
@@ -39,7 +44,7 @@ defmodule Resourceful.Collection.Sort do
 
   def all(string) when is_binary(string) do
     string
-    |> string_list()
+    |> String.split(~r/, */)
     |> all()
   end
 
@@ -61,9 +66,7 @@ defmodule Resourceful.Collection.Sort do
         sorter
 
       {:error, {_, %{sorter: sorter}}} ->
-        raise ArgumentError, message: "Cannot cast sorter: #{Kernel.inspect(sorter)}"
+        raise ArgumentError, message: "Cannot cast sorter: #{inspect(sorter)}"
     end
   end
-
-  def string_list(string) when is_binary(string), do: String.split(string, ~r/, */)
 end

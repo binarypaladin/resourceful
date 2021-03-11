@@ -85,63 +85,86 @@ defmodule Resourceful.Error do
   implying it was never resolved to an actual attribute.
   """
 
+  @type basic() :: {:error, atom()}
+
+  @type contextual() :: {:error, {atom(), map()}}
+
+  @type t() :: basic() | contextual()
+
+  @type or_type() :: atom() | t()
+
+  @builtins %{
+    attribute_not_found: %{
+      detail:
+        "An attribute with the name `%{key}` could not be found for resource type `%{resource_type}`.",
+      title: "Attribute Could Not Be Found"
+    },
+    cannot_filter_by_attribute: %{
+      detail: "`%{attribute}` is a valid attribute but cannot be used to filter resource.",
+      title: "Resource Cannot Be Filtered By Attribute"
+    },
+    cannot_sort_by_attribute: %{
+      detail: "`%{attribute}` is a valid attribute but cannot be used to sort resource.",
+      title: "Resource Cannot Be Sorted By Attribute"
+    },
+    invalid_field: %{
+      detail: "`%{key}` is not a valid field name for resource type `%{resource_type}`.",
+      title: "Invalid Field"
+    },
+    invalid_field_type: %{
+      detail: "`%{key}` is not a valid resource type in this request.",
+      title: "Invalid Field Type"
+    },
+    invalid_filter: %{
+      title: "Invalid Filter"
+    },
+    invalid_filter_operator: %{
+      detail: "`%{operator}` is not a valid filter operator.",
+      title: "Invalid Filter Operator"
+    },
+    invalid_filter_value: %{
+      detail: "`%{value}` is not compatible with filter operator `%{operator}`.",
+      title: "Invalid Filter Value"
+    },
+    invalid_sorter: %{
+      title: "Invalid Sorter"
+    },
+    max_depth_exceeded: %{
+      detail:
+        "`%{resource_type}` does not support queries with a depth greater than `%{max_depth}`",
+      title: "Max Query Depth Exceeded"
+    },
+    max_filters_exceeded: %{
+      detail: "Resource cannot be filtered by more than %{max_allowed} filters.",
+      title: "Max Filters Exceeded"
+    },
+    max_sorters_exceeded: %{
+      detail: "Resource cannot be sortered by more than %{max_allowed} sorters.",
+      title: "Max Sorters Exceeded"
+    },
+    no_type_registry: %{
+      detail: "Relationships for resource type `%{resource_type}` have not been configured.",
+      title: "Relationships Not Configured"
+    },
+    relationship_nesting_not_allowed: %{
+      detail:
+        "Relationship `%{key}` for resource type `%{resource_type}` does not allow nested queries. In most cases, this is because a relationship is a to-many relationship.",
+      title: "Relationship Nesting Not Allowed"
+    },
+    relationship_not_found: %{
+      detail:
+        "A relationship with the name `%{key}` could not be found for resource type `%{resource_type}`.",
+      title: "Relationship Could Not Be Found"
+    },
+    type_cast_failure: %{
+      detail: "`%{input}` cannot be cast to type `%{type}`.",
+      title: "Type Cast Failure"
+    }
+  }
+
   @error_type_defaults Enum.into(
                          Application.get_env(:resourceful, :error_type_defaults) || %{},
-                         %{
-                           attribute_not_found: %{
-                             detail:
-                               "An attribute with the name `%{key}` could not be found for resource type `%{resource_type}`.",
-                             title: "Attribute Could Not Be Found"
-                           },
-                           cannot_filter_by_attribute: %{
-                             detail:
-                               "`%{attribute}` is a valid attribute but cannot be used to filter resource.",
-                             title: "Resource Cannot Be Filtered By Attribute"
-                           },
-                           cannot_sort_by_attribute: %{
-                             detail:
-                               "`%{attribute}` is a valid attribute but cannot be used to sort resource.",
-                             title: "Resource Cannot Be Sorted By Attribute"
-                           },
-                           invalid_filter: %{
-                             title: "Invalid Filter"
-                           },
-                           invalid_filter_operator: %{
-                             detail: "`%{operator}` is not a valid filter operator.",
-                             title: "Invalid Filter Operator"
-                           },
-                           invalid_filter_value: %{
-                             detail:
-                               "`%{value}` is not compatible with filter operator `%{operator}`.",
-                             title: "Invalid Filter Value"
-                           },
-                           invalid_jsonapi_field: %{
-                             detail:
-                               "`%{key}` is not a valid field name for resource type `%{resource_type}`.",
-                             title: "Invalid Field"
-                           },
-                           invalid_jsonapi_field_type: %{
-                             detail: "`%{key}` is not a valid resource type in this request.",
-                             title: "Invalid Field Type"
-                           },
-                           invalid_sorter: %{
-                             title: "Invalid Sorter"
-                           },
-                           max_filters_exceeded: %{
-                             detail:
-                               "Resource cannot be filtered by more than %{max_allowed} filters.",
-                             title: "Max Filters Exceeded"
-                           },
-                           max_sorters_exceeded: %{
-                             detail:
-                               "Resource cannot be sortered by more than %{max_allowed} sorters.",
-                             title: "Max Sorters Exceeded"
-                           },
-                           type_cast_failure: %{
-                             detail: "`%{input}` cannot be cast to type `%{type}`.",
-                             title: "Type Cast Failure"
-                           }
-                         }
+                         @builtins
                        )
 
   @doc """
@@ -151,6 +174,7 @@ defmodule Resourceful.Error do
 
   Returns a list of errors.
   """
+  @spec all(any(), keyword()) :: list()
   def all(errors, opts \\ [])
 
   def all(%Ecto.Changeset{} = changeset, _opts), do: from_changeset(changeset)
@@ -169,9 +193,8 @@ defmodule Resourceful.Error do
   @doc """
   Recursively checks arbitrary data structures for any basic or contextual
   errors.
-
-  Returns `true` or `false`.
   """
+  @spec any?(any()) :: boolean()
   def any?({:error, _}), do: true
 
   def any?(list) when is_list(list), do: Enum.any?(list, &any?/1)
@@ -197,6 +220,7 @@ defmodule Resourceful.Error do
   Returns input data structure with errors modified to contain `:source` in
   their context.
   """
+  @spec auto_source(t() | map() | list(), list()) :: any()
   def auto_source(error_or_enum, prefix \\ [])
 
   def auto_source(%{} = map, prefix) do
@@ -220,6 +244,7 @@ defmodule Resourceful.Error do
 
   Returns a context map.
   """
+  @spec context(t() | map()) :: map()
   def context({:error, {_, %{} = context}}), do: context
 
   def context({:error, _}), do: %{}
@@ -231,6 +256,7 @@ defmodule Resourceful.Error do
 
   Returns an error tuple.
   """
+  @spec delete_context_key(t(), atom()) :: t()
   def delete_context_key({:error, {type, %{} = context}}, key) do
     {:error, {type, Map.delete(context, key)}}
   end
@@ -242,21 +268,20 @@ defmodule Resourceful.Error do
   inferred from the `:validation` key as Resourceful tends to use longer names.
   Rather than relying on separate input params, the `:input` is inserted from
   `data`, and `:source` is also inferred.
-
-  Returns an error tuple or list or error tuples.
   """
+  @spec from_changeset(%Ecto.Changeset{}) :: [contextual()]
   def from_changeset(%Ecto.Changeset{data: data, errors: errors, valid?: false}) do
-    from_changeset(errors, data)
+    do_from_changeset(errors, data)
   end
 
-  def from_changeset(errors, data \\ %{})
+  defp do_from_changeset(errors, data \\ %{})
 
-  def from_changeset(errors, %{} = data) when is_list(errors) do
-    Enum.map(errors, &from_changeset(&1, data))
+  defp do_from_changeset(errors, %{} = data) when is_list(errors) do
+    Enum.map(errors, &do_from_changeset(&1, data))
   end
 
-  def from_changeset({source, {detail, context_list}}, %{} = data)
-      when is_atom(source) do
+  defp do_from_changeset({source, {detail, context_list}}, %{} = data)
+       when is_atom(source) do
     context_list
     |> Map.new()
     |> Map.merge(%{
@@ -265,6 +290,22 @@ defmodule Resourceful.Error do
       source: [source]
     })
     |> changeset_error()
+  end
+
+  defp changeset_error(%{validation: :cast} = context) do
+    changeset_error(:type_cast_failure, Map.delete(context, :detail))
+  end
+
+  defp changeset_error(%{} = context) do
+    changeset_error(:input_validation_failure, context)
+  end
+
+  defp changeset_error(type, %{} = context) do
+    {:error, {type, Map.delete(context, :validation)}}
+  end
+
+  defp changeset_input(source, %{} = data) do
+    Map.get(data, to_string(source)) || Map.get(data, source)
   end
 
   @doc """
@@ -286,9 +327,8 @@ defmodule Resourceful.Error do
   related bindings in messages. (See `message_with_context/2` for details.)
 
   In the future, this is also where localization should happen.
-
-  Returns an error tuple.
   """
+  @spec humanize(t() | [t()], keyword()) :: contextual() | [contextual()]
   def humanize(error, opts \\ [])
 
   def humanize(errors, opts) when is_list(errors) do
@@ -316,6 +356,8 @@ defmodule Resourceful.Error do
     |> humanize(opts)
   end
 
+  defp default_type_message(path), do: get_in(@error_type_defaults, path)
+
   @doc """
   Transforms an arbitrary data structure that may contain errors into a single,
   flat list of those errors. Non-error values are removed. Collections are
@@ -335,9 +377,8 @@ defmodule Resourceful.Error do
   single request can return the totality of its failure to the client. This way,
   many different paths can be evaluated and if there are any errors along the
   way, those errors can be returned in full.
-
-  Returns a list of errors.
   """
+  @spec list(list() | map()) :: [t()]
   def list(enum) when is_list(enum) or is_map(enum) do
     enum
     |> flatten_maps()
@@ -345,14 +386,23 @@ defmodule Resourceful.Error do
     |> Enum.filter(&any?/1)
   end
 
+  defp flatten_maps(list) when is_list(list), do: Enum.map(list, &flatten_maps/1)
+
+  defp flatten_maps(%{} = map) do
+    map
+    |> Map.values()
+    |> flatten_maps()
+  end
+
+  defp flatten_maps(value), do: value
+
   @doc """
   Replaces context bindings in a message with atom keys in a context map.
 
   A message of `"Invalid input %{input}." would have `%{input}` replaced with
   the value in the context map of `:input`.
-
-  Returns a string.
   """
+  @spec message_with_context(String.t(), map()) :: String.t()
   def message_with_context(message, %{} = context) do
     Regex.replace(~r/%\{(\w+)\}/, message, fn _, key ->
       context
@@ -375,6 +425,7 @@ defmodule Resourceful.Error do
   Returns the input data structure with all instances of `{:ok, value}` replaced
   with `value`.
   """
+  @spec ok_value(any()) :: any()
   def ok_value({:ok, value}), do: ok_value(value)
 
   def ok_value(list) when is_list(list), do: Enum.map(list, &ok_value/1)
@@ -409,9 +460,8 @@ defmodule Resourceful.Error do
   the child structure to have no knowledge of the parent structure. Once the
   child errors are resolved the parent can then prepend its location in the
   structure to the child's errors.
-
-  Returns a contextual error tuple.
   """
+  @spec prepend_source(or_type() | [or_type()], any()) :: contextual() | [contextual()]
   def prepend_source(errors, prefix) when is_list(errors) do
     Enum.map(errors, &prepend_source(&1, prefix))
   end
@@ -434,90 +484,70 @@ defmodule Resourceful.Error do
   Adds a context map to an error if it lacks one, converting a basic error to a
   contextual error. It may also take a single atom to prevent error generating
   code from having to constantly wrap errors in an `:error` tuple.
-
-  Returns a contextual error tuple.
   """
+  @spec with_context(or_type()) :: contextual()
   def with_context({:error, {type, %{}}} = error) when is_atom(type), do: error
 
   def with_context({:error, type}) when is_atom(type), do: contextual_error(type)
 
   def with_context(type) when is_atom(type), do: contextual_error(type)
 
+  defp contextual_error(type), do: {:error, {type, %{}}}
+
+  @doc """
+  Adds the specified context as an error's context. If the error already has a
+  context map the new context is merged.
+  """
+  @spec with_context(or_type(), map()) :: contextual()
   def with_context(error_or_type, %{} = context) do
     error_or_type
     |> with_context()
     |> merge_context(context)
   end
 
+  defp merge_context({:error, {type, %{} = context}}, new_context) do
+    {:error, {type, Map.merge(context, new_context)}}
+  end
+
+  @doc """
+  Adds a context map to an error if it lacks on and then puts the key and value
+  into that map.
+  """
+  @spec with_context(or_type(), atom(), any()) :: contextual()
   def with_context(error_or_type, key, value) do
     error_or_type
     |> with_context()
     |> with_context_value(key, value)
   end
 
+  defp with_context_value({:error, {type, %{} = context}}, key, value) do
+    {:error, {type, Map.put(context, key, value)}}
+  end
+
   @doc """
   Convenience function to create or modify an existing error with `:input`
   context.
-
-  Returns a contextual error.
   """
-  def with_input(error_or_type, input), do: with_context(error_or_type, :input, input)
+  @spec with_input(or_type(), any()) :: contextual()
+  def with_input(error_or_type, input) do
+    with_context(error_or_type, :input, input)
+  end
 
   @doc """
   Convenience function to create or modify an existing error with `:key`
   context.
-
-  Returns a contextual error.
   """
+  @spec with_key(or_type(), any()) :: contextual()
   def with_key(error_or_type, key), do: with_context(error_or_type, :key, key)
 
   @doc """
   Adds source context to an error and replaces `:source` if present.
-
-  Returns a contextual error tuple.
   """
+  @spec with_source(or_type(), any(), map()) :: contextual()
   def with_source(error_or_type, source, %{} = context \\ %{}) do
     error_or_type
     |> with_context(context)
     |> delete_context_key(:source)
     |> prepend_source(source)
-  end
-
-  defp changeset_error(%{validation: :cast} = context) do
-    changeset_error(:type_cast_failure, Map.delete(context, :detail))
-  end
-
-  defp changeset_error(%{} = context) do
-    changeset_error(:input_validation_failure, context)
-  end
-
-  defp changeset_error(type, %{} = context) do
-    {:error, {type, Map.delete(context, :validation)}}
-  end
-
-  defp changeset_input(source, %{} = data) do
-    Map.get(data, to_string(source)) || Map.get(data, source)
-  end
-
-  defp contextual_error(type), do: {:error, {type, %{}}}
-
-  defp default_type_message(path), do: get_in(@error_type_defaults, path)
-
-  defp flatten_maps(list) when is_list(list), do: Enum.map(list, &flatten_maps/1)
-
-  defp flatten_maps(%{} = map) do
-    map
-    |> Map.values()
-    |> flatten_maps()
-  end
-
-  defp flatten_maps(value), do: value
-
-  defp merge_context({:error, {type, %{} = context}}, new_context) do
-    {:error, {type, Map.merge(context, new_context)}}
-  end
-
-  defp with_context_value({:error, {type, %{} = context}}, key, value) do
-    {:error, {type, Map.put(context, key, value)}}
   end
 end

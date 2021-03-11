@@ -83,7 +83,7 @@ defmodule Resourceful.Type.Ecto do
     opts = expand_all_opts(fields, opts)
 
     Keyword.merge(opts,
-      attributes: Enum.map(fields, &attribute(schema, &1, attr_opts(&1, opts))),
+      fields: Enum.map(fields, &attribute(schema, &1, attr_opts(&1, opts))),
       meta: %{ecto: %{schema: schema}},
       id: Keyword.get(opts, :id, schema.__schema__(:primary_key))
     )

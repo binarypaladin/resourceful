@@ -11,6 +11,14 @@ defmodule Resourceful.Registry do
   time.
   """
 
+  defmodule DuplicateTypeNameError do
+    defexception message: "type with name already exists"
+  end
+
+  defmodule InvalidType do
+    defexception message: "result of block must be a `Resourceful.Type`"
+  end
+
   alias Resourceful.Type
 
   defmacro __using__(_) do
@@ -20,6 +28,7 @@ defmodule Resourceful.Registry do
       import Resourceful.Type,
         only: [
           id: 2,
+          max_depth: 2,
           max_filters: 2,
           max_sorters: 2,
           meta: 3,
@@ -34,7 +43,7 @@ defmodule Resourceful.Registry do
 
       @before_compile {unquote(__MODULE__), :before_compile}
 
-      @rtypes_map %{}
+      @rtypes %{}
 
       def fetch(name), do: Map.fetch(all(), name)
 
@@ -42,10 +51,70 @@ defmodule Resourceful.Registry do
 
       def get(name), do: Map.get(all(), name)
 
+      def get_field_graph(name), do: Map.get(field_graphs(), name)
+
+      def fetch_field_graph(name), do: Map.fetch(field_graphs(), name)
+
+      def fetch_field_graph!(name), do: Map.fetch!(field_graphs(), name)
+
       def has_type?(name), do: Map.has_key?(all(), name)
     end
   end
 
+  @doc """
+
+  """
+  @spec build_field_graph(%{String.t() => %Type{}}, String.t()) :: Type.field_graph()
+  def build_field_graph(types_map, type_name) do
+    type = Map.get(types_map, type_name)
+    do_build_field_graph(%{}, types_map, type, type.max_depth, nil, nil, [])
+  end
+
+  def do_build_field_graph(field_graph, _, _, -1, _, _, _), do: field_graph
+
+  def do_build_field_graph(
+        field_graph,
+        types_map,
+        %Type{} = type,
+        depth,
+        parent,
+        name_prefix,
+        map_to_prefix
+      ) do
+    Enum.reduce(type.fields, field_graph, fn {name, field}, new_field_graph ->
+      new_map_to = map_to_prefix ++ [field.map_to]
+      new_name = qualify_name(name_prefix, name)
+
+      field_data = Type.GraphedField.new(field, new_name, new_map_to, parent)
+
+      new_field_graph = Map.put(new_field_graph, new_name, field_data)
+
+      case field do
+        %Type.Relationship{graph?: true} ->
+          do_build_field_graph(
+            new_field_graph,
+            types_map,
+            Map.fetch!(types_map, field.related_type),
+            depth - 1,
+            field_data,
+            new_name,
+            new_map_to
+          )
+
+        _ ->
+          new_field_graph
+      end
+    end)
+  end
+
+  defp qualify_name(nil, name), do: name
+
+  defp qualify_name(prefix, name), do: "#{prefix}.#{name}"
+
+  @doc """
+
+  """
+  @spec maybe_put_name(%Type{}, String.t() | nil) :: %Type{}
   def maybe_put_name(%Type{} = type, nil), do: type
 
   def maybe_put_name(%Type{} = type, name) when is_binary(name) do
@@ -59,42 +128,39 @@ defmodule Resourceful.Registry do
   @spec validate_type!(any(), %{String.t() => %Type{}}) :: %Type{}
   def validate_type!(%Type{} = type, types) do
     if Map.has_key?(types, type.name) do
-      raise Resourceful.Registry.DuplicateTypeNameError,
+      raise __MODULE__.DuplicateTypeNameError,
         message: "type with name `#{type.name}` already exists"
     end
 
     type
   end
 
-  def validate_type!(_, _), do: raise(Resourceful.Registry.InvalidType)
+  def validate_type!(_, _), do: raise(__MODULE__.InvalidType)
 
   defmacro type(name \\ nil, do: block) do
     quote do
       @rtype unquote(block)
-             |> Resourceful.Type.registry(__MODULE__)
+             |> Resourceful.Type.register(__MODULE__)
              |> unquote(__MODULE__).maybe_put_name(unquote(name))
-             |> unquote(__MODULE__).validate_type!(@rtypes_map)
+             |> unquote(__MODULE__).validate_type!(@rtypes)
 
-      @rtypes_map Map.put(@rtypes_map, @rtype.name, @rtype)
+      @rtypes Map.put(@rtypes, @rtype.name, @rtype)
     end
   end
 
   defmacro before_compile(_) do
     quote do
-      @rtype_names Map.keys(@rtypes_map)
+      def all(), do: @rtypes
 
-      def all(), do: @rtypes_map
+      @rtype_field_graphs Map.new(@rtypes, fn {name, _} ->
+                            {name, unquote(__MODULE__).build_field_graph(@rtypes, name)}
+                          end)
+
+      def field_graphs(), do: @rtype_field_graphs
+
+      @rtype_names Map.keys(@rtypes)
 
       def names(), do: @rtype_names
     end
   end
 end
-
-defmodule Resourceful.Registry.DuplicateTypeNameError do
-  defexception message: "type with name already exists"
-end
-
-defmodule Resourceful.Registry.InvalidType do
-  defexception message: "result of block must be a `Resourceful.Type`"
-end
-

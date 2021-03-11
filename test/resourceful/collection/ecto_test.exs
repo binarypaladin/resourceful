@@ -1,6 +1,8 @@
 defmodule Resourceful.Collection.EctoTest do
   use Resourceful.Test.DatabaseCase
 
+  import Ecto.Query, warn: false
+
   alias Resourceful.Collection
 
   @opts [ecto_repo: Repo]
@@ -12,9 +14,9 @@ defmodule Resourceful.Collection.EctoTest do
   test "any?" do
     assert Collection.Ecto.any?(Album, @opts) == true
 
-    Repo.delete_all(Album)
+    query = where(Album, title: "")
 
-    assert Collection.Ecto.any?(Album, @opts) == false
+    assert Collection.Ecto.any?(query, @opts) == false
   end
 
   test "total" do

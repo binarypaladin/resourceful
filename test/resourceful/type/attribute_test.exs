@@ -15,7 +15,6 @@ defmodule Resourceful.Type.AttributeTest do
     assert attr.name == "artist"
     assert attr.sort? == false
     assert attr.type == :string
-    assert Attribute.map_value(attr, @resource) == "David Bowie"
   end
 
   test "new/3 with keywords" do
@@ -32,7 +31,6 @@ defmodule Resourceful.Type.AttributeTest do
     assert attr.map_to == :artist
     assert attr.name == "name"
     assert attr.sort? == true
-    assert Attribute.map_value(attr, @resource) == "David Bowie"
   end
 
   test "cast/2" do
@@ -57,26 +55,6 @@ defmodule Resourceful.Type.AttributeTest do
 
     attr = Attribute.filter(attr, nil)
     assert attr.filter? == false
-  end
-
-  test "getter/2" do
-    func = fn attr, resource ->
-      resource
-      |> Map.get(attr.map_to, "undefined #{attr.name}")
-      |> String.upcase()
-    end
-
-    attr = Attribute.getter(attr(), func)
-    assert Attribute.map_value(attr, @resource) == "DAVID BOWIE"
-    assert Attribute.map_value(attr, %{}) == "UNDEFINED ARTIST"
-  end
-
-  test "map_to/2" do
-    attr = Attribute.map_to(attr(), "artist")
-    resource = %{"artist" => "Duran Duran"}
-
-    assert attr.map_to == "artist"
-    assert Attribute.map_value(attr, resource) == "Duran Duran"
   end
 
   test "name/2" do
@@ -114,7 +92,7 @@ defmodule Resourceful.Type.AttributeTest do
 
     attr = %{attr | filter?: true}
 
-    assert Attribute.validate_filter(attr, "gte", "3") == {:ok, {:tracks, "gte", 3}}
+    assert Attribute.validate_filter(attr, "gte", "3") == {:ok, {attr, "gte", 3}}
 
     assert Attribute.validate_filter(attr, "gte", "X") ==
              {:error, {:type_cast_failure, %{input: "X", attribute: "tracks", type: :integer}}}
@@ -131,6 +109,6 @@ defmodule Resourceful.Type.AttributeTest do
              {:error, {:cannot_sort_by_attribute, %{attribute: "artist"}}}
 
     attr = %{attr | sort?: true}
-    assert Attribute.validate_sorter(attr, :desc) == {:ok, {:desc, attr.map_to}}
+    assert Attribute.validate_sorter(attr, :desc) == {:ok, {:desc, attr}}
   end
 end
