@@ -2,6 +2,14 @@ defmodule Resourceful.Test.Fixtures do
   alias Resourceful.Test.{Artist, Album, Repo, Song}
 
   def albums do
+    artists = map_by_id(artists())
+
+    Enum.map(albums_only(), fn album ->
+      Map.put(album, "artist", artists[album["artist_id"]])
+    end)
+  end
+
+  def albums_only do
     [
       %{
         "id" => 1,
@@ -141,7 +149,7 @@ defmodule Resourceful.Test.Fixtures do
     ]
   end
 
-  def songs do
+  def songs_only do
     [
       %{
         "id" => 1,
@@ -416,14 +424,24 @@ defmodule Resourceful.Test.Fixtures do
     ]
   end
 
+  def songs do
+    albums = map_by_id(albums())
+
+    Enum.map(songs_only(), fn song ->
+      Map.put(song, "album", albums[song["album_id"]])
+    end)
+  end
+
   def albums_query, do: Ecto.Queryable.to_query(Album)
 
   def seed_database do
     seed_table(artists(), Artist)
-    seed_table(albums(), Album)
-    seed_table(songs(), Song)
+    seed_table(albums_only(), Album)
+    seed_table(songs_only(), Song)
     :ok
   end
+
+  defp map_by_id(list), do: Map.new(list, fn v -> {v["id"], v} end)
 
   defp seed_table(list, schema) do
     Enum.map(list, fn attrs ->
