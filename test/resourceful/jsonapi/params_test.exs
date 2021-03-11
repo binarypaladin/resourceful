@@ -2,10 +2,11 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   use ExUnit.Case
 
   alias Resourceful.JSONAPI.Params
-  alias Resourceful.Test.Fixtures
+  alias Resourceful.Test.Types
+  alias Resourceful.Type
 
   test "validate/3 with valid params" do
-    type = Fixtures.jsonapi_type()
+    type = Types.get("albums")
 
     params = %{
       "fields" => %{"albums" => "releaseDate,title"},
@@ -16,11 +17,14 @@ defmodule Resourceful.JSONAPI.ParamsTest do
 
     {:ok, opts} = Params.validate(type, params)
 
+    release_date = Type.fetch_graphed_field!(type, "releaseDate")
+    title = Type.fetch_graphed_field!(type, "title")
+
     assert [
              fields: %{"albums" => ["releaseDate", "title"]},
-             filter: [{:release_date, "lt", ~D[2001-01-01]}],
+             filter: [{release_date, "lt", ~D[2001-01-01]}],
              page: [number: 2, size: 4],
-             sort: [desc: :release_date, asc: :title]
+             sort: [desc: release_date, asc: title]
            ] == opts
 
     assert {:ok, [fields: %{"albums" => ["releaseDate"]}]} ==
@@ -28,7 +32,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   end
 
   test "validate/3 with invalid params" do
-    type = Fixtures.jsonapi_type()
+    type = Types.get("albums")
 
     params = %{
       "fields" => "albums",
@@ -47,7 +51,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   end
 
   test "validate/3 with invalid type values" do
-    type = Fixtures.jsonapi_type()
+    type = Types.get("albums")
 
     params = %{
       "fields" => %{"albums" => ["releaseDate", "titl"]},
@@ -59,7 +63,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
     assert {:error,
             [
               error:
-                {:invalid_jsonapi_field,
+                {:invalid_field,
                  %{
                    input: "titl",
                    key: "titl",
@@ -76,7 +80,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                  }},
               error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}},
               error:
-                {:attribute_not_found,
+                {:field_not_found,
                  %{
                    input: "-releaseDate,titl",
                    key: "titl",
