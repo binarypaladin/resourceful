@@ -11,19 +11,13 @@ defmodule Resourceful.TypeTest do
     }
   end
 
-  def ecto_type do
-    Type.Ecto.type_with_schema(
-      Resourceful.Test.Album,
-      query: true,
-      transform_names: &Inflex.camelize(&1, :lower)
-    )
-  end
+  def ecto_type, do: Resourceful.Test.Types.get("albums")
 
-  def type, do: Type.new("artist", attributes: attributes())
+  def type, do: Type.new("artist", fields: attributes())
 
   test "new/2" do
     type = Type.new("object")
-    assert type.attributes == %{}
+    assert type.fields == %{}
     assert type.id == nil
     assert type.max_filters == 4
     assert type.max_sorters == 2
@@ -36,25 +30,25 @@ defmodule Resourceful.TypeTest do
     type =
       Type.new(
         "artist",
-        attributes: Map.values(attributes),
+        fields: Map.values(attributes),
         max_filters: nil,
         max_sorters: 10
       )
 
-    assert type.attributes == attributes
+    assert type.fields == attributes
     assert type.id == "id"
     assert type.max_filters == nil
     assert type.max_sorters == 10
     assert type.name == "artist"
 
-    type = Type.new("artist", attributes: attributes, id: "name")
-    assert type.attributes == attributes
+    type = Type.new("artist", fields: attributes, id: "name")
+    assert type.fields == attributes
     assert type.id == "name"
   end
 
   test "fetch_attribute/2" do
     attr = Attribute.new("number", :integer)
-    type = Type.new("object", attributes: [attr])
+    type = Type.new("object", fields: [attr])
 
     assert Type.fetch_attribute(type, "number") == {:ok, attr}
 
@@ -62,27 +56,18 @@ defmodule Resourceful.TypeTest do
              {:error, {:attribute_not_found, %{key: "NUMBER", resource_type: "object"}}}
   end
 
-  test "get_attribute/2" do
-    attr = Attribute.new("number", :integer)
-    type = Type.new("object", attributes: [attr])
-
-    assert Type.get_attribute(type, "number") == attr
-
-    refute Type.get_attribute(type, "NUMBER")
-  end
-
   test "id/2", do: assert(Type.id(type(), "name").id == "name")
 
   test "map_value/3" do
-    assert Type.map_value(ecto_type(), %{tracks: 2}, "tracks") == 2
+    assert Type.map_value(%{tracks: 2}, ecto_type(), "tracks") == 2
   end
 
   test "map_values/3" do
     assert Type.map_values(
+             %{artist: %{name: "Queen"}, title: "Queen II", tracks: 2},
              ecto_type(),
-             %{artist: "Queen", title: "Queen II", tracks: 2},
-             ["title", "artist"]
-           ) == [{"title", "Queen II"}, {"artist", "Queen"}]
+             ["title", "artist.name"]
+           ) == [{"title", "Queen II"}, {"artist.name", "Queen"}]
   end
 
   test "max_filters/2" do
@@ -99,14 +84,14 @@ defmodule Resourceful.TypeTest do
     assert Type.name(type(), "object").name == "object"
   end
 
-  test "put_attribute/2" do
+  test "put_field/2" do
     type = Type.new("object")
-    refute Map.has_key?(type.attributes, "number")
+    refute Map.has_key?(type.fields, "number")
 
     attr = Attribute.new("number", :integer)
 
-    type = Type.put_attribute(type, attr)
-    assert Map.get(type.attributes, "number") == attr
+    type = Type.put_field(type, attr)
+    assert Map.get(type.fields, "number") == attr
   end
 
   test "to_map/3" do
@@ -119,19 +104,19 @@ defmodule Resourceful.TypeTest do
 
   test "validate_filter/2" do
     type = ecto_type()
+    field = Type.fetch_field!(type, "artist.name")
+    ok = {:ok, {field, "eq", "Duran Duran"}}
 
-    ok = {:ok, {:artist, "eq", "Duran Duran"}}
+    assert Type.validate_filter(type, {"artist.name", "Duran Duran"}) == ok
+    assert Type.validate_filter(type, {"artist.name eq", "Duran Duran"}) == ok
 
-    assert Type.validate_filter(type, {"artist", "Duran Duran"}) == ok
-    assert Type.validate_filter(type, {"artist eq", "Duran Duran"}) == ok
+    assert Type.validate_filter(type, {"artist.nam", "Duran Duran"}) ==
+             {:error, {:field_not_found, %{key: "artist.nam", resource_type: "albums"}}}
 
-    assert Type.validate_filter(type, {"invalid", "Duran Duran"}) ==
-             {:error, {:attribute_not_found, %{key: "invalid", resource_type: "albums"}}}
-
-    assert Type.validate_filter(type, {"artist et", "Duran Duran"}) ==
+    assert Type.validate_filter(type, {"artist.name et", "Duran Duran"}) ==
              {:error,
               {:invalid_filter_operator,
-               %{attribute: "artist", operator: "et", value: "Duran Duran"}}}
+               %{attribute: "artist.name", operator: "et", value: "Duran Duran"}}}
   end
 
   test "validate_max_filters/3" do
@@ -160,12 +145,13 @@ defmodule Resourceful.TypeTest do
 
   test "validate_sorter/2" do
     type = ecto_type()
+    field = Type.fetch_field!(type, "releaseDate")
 
-    ok = {:ok, {:desc, :release_date}}
+    ok = {:ok, {:desc, field}}
 
     assert Type.validate_sorter(type, "-releaseDate") == ok
 
     assert Type.validate_sorter(type, "-releaseDat") ==
-             {:error, {:attribute_not_found, %{key: "releaseDat", resource_type: "albums"}}}
+             {:error, {:field_not_found, %{key: "releaseDat", resource_type: "albums"}}}
   end
 end

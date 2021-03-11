@@ -432,7 +432,11 @@ defmodule Resourceful.Test.Fixtures do
     end)
   end
 
-  def albums_query, do: Ecto.Queryable.to_query(Album)
+  def albums_with_artist() do
+    import Ecto.Query, warn: false
+
+    join(Album, :inner, [q], assoc(q, :artist), as: :artist)
+  end
 
   def seed_database do
     seed_table(artists(), Artist)
