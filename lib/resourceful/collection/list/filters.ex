@@ -21,7 +21,7 @@ defmodule Resourceful.Collection.List.Filters do
 
   defp eq(x, y), do: Sort.eq(x, y)
 
-  defp filter(list, k, func), do: Enum.filter(list, &func.(Map.get(&1, k)))
+  defp filter(list, k, func), do: Enum.filter(list, &func.(Sort.get_val(&1, k)))
 
   defp gt(x, y), do: Sort.desc(x, y)
 

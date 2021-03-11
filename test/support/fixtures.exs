@@ -450,6 +450,4 @@ defmodule Resourceful.Test.Fixtures do
       |> Repo.insert()
     end)
   end
-
-  def sorters, do: [asc: "artist", desc: "tracks", asc: "title"]
 end

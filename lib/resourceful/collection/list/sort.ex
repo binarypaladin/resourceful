@@ -20,6 +20,10 @@ defmodule Resourceful.Collection.List.Sort do
 
   def eq(x, y), do: x == y
 
+  def get_val(resource, keys) when is_list(keys), do: get_in(resource, keys)
+
+  def get_val(resource, keys), do: Map.get(resource, keys)
+
   def to_sorter([head | []]), do: [head]
 
   def to_sorter([{_, key} | tail]), do: [{:eq, key}] ++ to_sorter(tail)
@@ -37,10 +41,6 @@ defmodule Resourceful.Collection.List.Sort do
   defp apply_sorter({op, keys}, x, y) do
     apply(__MODULE__, op, [get_val(x, keys), get_val(y, keys)])
   end
-
-  defp get_val(resource, keys) when is_list(keys), do: get_in(resource, keys)
-
-  defp get_val(resource, keys), do: Map.get(resource, keys)
 
   defp sort_with_sorters(sorters, x, y), do: Enum.all?(sorters, &apply_sorter(&1, x, y))
 end

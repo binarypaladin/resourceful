@@ -6,6 +6,8 @@ defmodule Resourceful.Collection.List.SortTest do
 
   import Resourceful.Test.Helpers
 
+  def sorters, do: [asc: ["artist", "name"], desc: "tracks", asc: "title"]
+
   test "sorts a list of maps" do
     sorted = Sort.call(Fixtures.albums(), asc: "title")
 
@@ -27,7 +29,8 @@ defmodule Resourceful.Collection.List.SortTest do
            |> last()
            |> id() == 15
 
-    sorted = Sort.call(Fixtures.albums(), desc: "artist", desc: "tracks", asc: "release_date")
+    sorted =
+      Sort.call(Fixtures.albums(), desc: ["artist", "name"], desc: "tracks", asc: "release_date")
 
     assert sorted
            |> first()
@@ -43,15 +46,16 @@ defmodule Resourceful.Collection.List.SortTest do
   end
 
   test "converts base sorter to an expanded line of sorters" do
-    assert Sort.to_sorter(Fixtures.sorters()) == [eq: "artist", eq: "tracks", asc: "title"]
+    assert Sort.to_sorter(sorters()) ==
+      [eq: ["artist", "name"], eq: "tracks", asc: "title"]
   end
 
   test "converts base sorters to list sorters" do
-    assert Sort.to_sorters(Fixtures.sorters()) ==
+    assert Sort.to_sorters(sorters()) ==
              [
-               [asc: "artist"],
-               [eq: "artist", desc: "tracks"],
-               [eq: "artist", eq: "tracks", asc: "title"]
+               [asc: ["artist", "name"]],
+               [eq: ["artist", "name"], desc: "tracks"],
+               [eq: ["artist", "name"], eq: "tracks", asc: "title"]
              ]
   end
 
