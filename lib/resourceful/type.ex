@@ -299,8 +299,11 @@ defmodule Resourceful.Type do
   @spec map_id(%Type{}, any()) :: any()
   def map_id(type, resource), do: map_value(type, resource, type.id)
 
-  @spec map_value(%Type{}, any(), field_name()) :: any()
-  def map_value(%Type{} = type, name, resource) do
+  @doc """
+  Maps a value for a given field name for a resource.
+  """
+  @spec map_value(resource, %Type{}, field_name()) :: any()
+  def map_value(resource, %Type{} = type, name) do
     case map_field(type, name) do
       {:ok, path} -> get_with_path(resource, path)
       _ -> nil
@@ -318,22 +321,20 @@ defmodule Resourceful.Type do
   defp get_with_path(_, _), do: nil
 
   @doc """
-  Takes a type, mappable resource, and a list of attributes. Returns a list of
-  tuples with the attribute name and the mapped value. This is returned instead
+  Takes mappable resource, a type, and a list of fields. Returns a list of
+  tuples with the field name and the mapped value. This is returned instead
   of a map to preserve the order of the input list. If order is irrelevant, use
   `to_map/2` instead.
   """
   @spec map_values(%Type{}, any(), [field_name()]) :: [{any(), any()}]
-  def map_values(type, resource, fields \\ [])
+  def map_values(resource, type, fields \\ [])
 
-  def map_values(type, resource, []) do
-    map_values(type, resource, Map.keys(type.fields))
+  def map_values(resource, type, []) do
+    map_values(resource, type, Map.keys(type.fields))
   end
 
-  def map_values(type, resource, fields) when is_list(fields) do
-    Enum.map(fields, &{&1, map_value(type, resource, &1)})
-  end
-
+  def map_values(resource, type, fields) when is_list(fields) do
+    Enum.map(fields, &{&1, map_value(resource, type, &1)})
   end
 
   @doc """
@@ -403,10 +404,10 @@ defmodule Resourceful.Type do
   Like `map_values/3` only returns a map with keys in the name of the attributes
   with with values of the mapped values.
   """
-  @spec to_map(%Type{}, any(), list()) :: map()
-  def to_map(type, resource, attribute_names \\ []) do
+  @spec to_map(any(), %Type{}, list()) :: map()
+  def to_map(resource, type, field_names \\ []) do
     type
-    |> map_values(resource, attribute_names)
+    |> map_values(resource, field_names)
     |> Map.new()
   end
 
