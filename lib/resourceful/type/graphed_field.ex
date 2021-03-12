@@ -4,9 +4,9 @@ defmodule Resourceful.Type.GraphedField do
   data dictating how it is to be mapped in a graph from the perspective of a
   type.
 
-  For example, while the attribute `title` on an album all always be the same
-  value, when that attribute is viewed from the perspective of a song or an
-  artist nesting information needs to be included. On it's own the attribute
+  For example, while the attribute `title` on an album will always be the same
+  value. However, when that attribute is viewed from the perspective of a song
+  or an artist graph information needs to be included. On it's own the attribute
   might map to `:title` but from a song it would map to `[:album, :title]`.
 
   The `query_alias` is used for Ecto to idenify a join with the `:as` option
@@ -27,6 +27,9 @@ defmodule Resourceful.Type.GraphedField do
 
   @doc """
   Creates a new graphed field.
+
+  This function will almost never be called directly but rather as part of
+  `Resourceful.Registry.build_field_graph/2`.
   """
   @spec new(Type.field(), String.t(), list(), %GraphedField{} | nil) :: %GraphedField{}
   def new(field, name, map_to, parent \\ nil) do

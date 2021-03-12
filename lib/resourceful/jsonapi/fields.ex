@@ -47,8 +47,8 @@ defmodule Resourceful.JSONAPI.Fields do
 
   defp validate_field_type(type, type_name) do
     case Type.fetch_related_type(type, type_name) do
-      :error -> Error.with_key(:invalid_field_type, type_name)
-      ok -> ok
+      {:ok, _} = ok -> ok
+      _ -> Error.with_key(:invalid_field_type, type_name)
     end
   end
 
@@ -66,7 +66,7 @@ defmodule Resourceful.JSONAPI.Fields do
     fields
     |> Stream.with_index()
     |> Enum.map(fn {field, index} ->
-      case Type.has_field?(type, field) do
+      case Type.has_local_field?(type, field) do
         true ->
           {:ok, field}
 

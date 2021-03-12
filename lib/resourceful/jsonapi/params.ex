@@ -34,7 +34,7 @@ defmodule Resourceful.JSONAPI.Params do
   """
 
   alias Resourceful.{Error, Type}
-  alias Resourceful.JSONAPI.{Fields, Pagination}
+  alias Resourceful.JSONAPI.{Fields, Include, Pagination}
 
   def split_string_list(input), do: String.split(input, ~r/, */)
 
@@ -42,6 +42,7 @@ defmodule Resourceful.JSONAPI.Params do
     %{
       fields: validate_fields(type, params),
       filter: validate_filter(type, params),
+      include: validate_include(type, params),
       page: validate_page(params, opts),
       sort: validate_sort(type, params)
     }
@@ -58,7 +59,7 @@ defmodule Resourceful.JSONAPI.Params do
     end
   end
 
-  def validate_fields(%Type{} = type, %{"fields" => %{} = fields_by_type}) do
+  def validate_fields(type, %{"fields" => %{} = fields_by_type}) do
     Fields.validate(type, fields_by_type)
   end
 
@@ -66,7 +67,7 @@ defmodule Resourceful.JSONAPI.Params do
 
   def validate_fields(_, _), do: nil
 
-  def validate_filter(%Type{} = type, %{"filter" => %{} = filters}) do
+  def validate_filter(type, %{"filter" => %{} = filters}) do
     filters
     |> Enum.map(fn {source, input} = filter ->
       with {:error, _} = error <- Type.validate_filter(type, filter),
@@ -78,6 +79,14 @@ defmodule Resourceful.JSONAPI.Params do
   def validate_filter(_, %{"filter" => invalid}), do: invalid_input("filter", invalid)
 
   def validate_filter(_, _), do: nil
+
+  def validate_include(type, %{"include" => includes})
+      when is_binary(includes) or is_list(includes),
+      do: Include.validate(type, includes)
+
+  def validate_include(_, %{"include" => invalid}), do: invalid_input("include", invalid)
+
+  def validate_include(_, _), do: nil
 
   def validate_page(params, opts \\ [])
 
@@ -108,7 +117,7 @@ defmodule Resourceful.JSONAPI.Params do
     )
   end
 
-  def validate_sort(%Type{} = type, %{"sort" => sorters}, context)
+  def validate_sort(type, %{"sort" => sorters}, context)
       when is_list(sorters) do
     sorters
     |> Stream.with_index()

@@ -430,6 +430,8 @@ defmodule Resourceful.Error do
 
   def ok_value(%Ecto.Changeset{changes: changes}), do: changes
 
+  def ok_value(%_{} = struct), do: struct
+
   def ok_value(%{} = map), do: Map.new(map, fn {k, v} -> {k, ok_value(v)} end)
 
   def ok_value(value), do: value

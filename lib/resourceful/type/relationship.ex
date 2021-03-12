@@ -39,29 +39,35 @@ defmodule Resourceful.Type.Relationship do
   defstruct @enforce_keys
 
   @doc """
-
+  Creates a new relationship, coerces values, and sets defaults.
   """
   @spec new(type(), String.t() | atom(), keyword()) :: %Relationship{}
   def new(type, name, opts \\ []) do
-    name = Type.validate_name!(name)
+    map_to = Keyword.get(opts, :map_to) || String.to_existing_atom(name)
     type = check_type!(type)
     related_type = Keyword.get(opts, :related_type, name)
     graph = type == :one && Keyword.get(opts, :graph?, true)
 
     %Relationship{
       graph?: graph,
-      name: name,
-      map_to: Keyword.get(opts, :map_to, String.to_existing_atom(name)),
+      name: Type.validate_name!(name),
+      map_to: Type.validate_map_to!(map_to),
       related_type: related_type,
       type: type
     }
   end
 
   @doc """
-
+  Sets the name for the relationship. This is the "edge" name that clients will
+  interact with. It can be any string as long as it doesn't contain dots. This
+  will also serve as its key name if used in conjunction with a
+  `Resourceful.Type` which is important in that names must be unique within a
+  type.
   """
   @spec name(%Relationship{}, String.t() | atom()) :: %Relationship{}
-  def name(%Relationship{} = rel, name), do: Map.put(rel, :name, Type.validate_name!(name))
+  def name(%Relationship{} = rel, name) do
+    Map.put(rel, :name, Type.validate_name!(name))
+  end
 
   defp check_type!(type) when type in [:many, :one], do: type
 end

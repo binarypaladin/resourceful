@@ -82,6 +82,10 @@ defmodule Resourceful.Type do
     defexception message: "names cannot contain periods (\".\")"
   end
 
+  defmodule InvalidMapTo do
+    defexception message: "only atoms and strings may be used for mapping"
+  end
+
   import Map, only: [put: 3]
 
   alias __MODULE__
@@ -131,8 +135,8 @@ defmodule Resourceful.Type do
       id: opt_id(Keyword.get(opts, :id, default_id(fields))),
       meta: opt_meta(Keyword.get(opts, :meta, %{})),
       max_depth: opt_max(Keyword.get(opts, :max_depth, 1)),
-      max_filters: opt_max(Keyword.get(opts, :max_filters, 4)),
-      max_sorters: opt_max(Keyword.get(opts, :max_sorters, 2)),
+      max_filters: opt_max_or_nil(Keyword.get(opts, :max_filters, 4)),
+      max_sorters: opt_max_or_nil(Keyword.get(opts, :max_sorters, 2)),
       name: validate_name!(name)
     }
   end
@@ -165,9 +169,11 @@ defmodule Resourceful.Type do
 
   defp opt_id(id_attribute) when is_binary(id_attribute), do: id_attribute
 
-  defp opt_max(nil), do: nil
-
   defp opt_max(int) when is_integer(int) and int >= 0, do: int
+
+  defp opt_max_or_nil(nil), do: nil
+
+  defp opt_max_or_nil(int), do: opt_max(int)
 
   defp opt_meta(%{} = map), do: map
 
@@ -224,6 +230,9 @@ defmodule Resourceful.Type do
 
   @doc """
   Fetches a field with related graph data using the resource's field graphs.
+
+  Unless you have a specific reason for fetching only graphed fields, use
+  `fetch_field/3` instead.
   """
   @spec fetch_graphed_field(%Type{}, field_name(), keyword()) ::
           {:ok, %GraphedField{}} | Error.t()
@@ -246,14 +255,20 @@ defmodule Resourceful.Type do
   @doc """
   Same as `fetch_graphed_field/2` but raises `FieldError` if the graphed field
   isn't present.
+
+  Unless you have a specific reason for fetching only graphed fields, use
+  `fetch_field!/3` instead.
   """
   @spec fetch_graphed_field!(%Type{}, field_name()) :: %GraphedField{}
   def fetch_graphed_field!(type, name), do: fetch!(name, fetch_graphed_field(type, name))
 
   @doc """
   Fetches a local field by name.
+
+  Unless you have a specific reason for fetching local fields, use
+  `fetch_field/3` instead.
   """
-  @spec fetch_local_field(%Type{}, String.t()) :: {:ok, field()} | Error.t()
+  @spec fetch_local_field(%Type{}, String.t(), keyword()) :: {:ok, field()} | Error.t()
   def fetch_local_field(type, name, opts \\ []) do
     with {:ok, field} = ok <- Map.fetch(type.fields, name),
          true <- field_is?(field, opts) do
@@ -266,6 +281,9 @@ defmodule Resourceful.Type do
   @doc """
   Same as `fetch_local_field/2` but raises `FieldError` if the local field isn't
   present.
+
+  Unless you have a specific reason for fetching local fields, use
+  `fetch_field@/3` instead.
   """
   @spec fetch_local_field!(%Type{}, field_name()) :: %GraphedField{}
   def fetch_local_field!(type, name, opts \\ []) do
@@ -306,8 +324,8 @@ defmodule Resourceful.Type do
   @doc """
   Checks if a type has a local field.
   """
-  @spec has_field?(%Type{}, String.t()) :: boolean()
-  def has_field?(%Type{} = type, name), do: Map.has_key?(type.fields, name)
+  @spec has_local_field?(%Type{}, String.t()) :: boolean()
+  def has_local_field?(%Type{} = type, name), do: Map.has_key?(type.fields, name)
 
   @doc """
   Sets the attribute to be used as the ID attribute for a given type. The ID
@@ -321,21 +339,21 @@ defmodule Resourceful.Type do
   def id(type, id_attribute), do: put(type, :id, opt_id(id_attribute))
 
   @doc """
-  Validates and returns the mapped names from a graph given in field form.
+  Validates and returns the mapped names from a graph
   """
   @spec map_field(%Type{}, field_name()) ::
           {:ok, [atom() | String.t()]} | Error.t()
   def map_field(type, name) do
-    with {:ok, graphed} <- fetch_graphed_field(type, name),
-         do: {:ok, graphed.map_to}
+    with {:ok, field_or_graph} <- fetch_field(type, name),
+         do: {:ok, field_or_graph.map_to}
   end
 
   @doc """
   Maps the ID value for a given resource. This is just shorthand for using
   `map_value/3` on whatever field is designated as the ID.
   """
-  @spec map_id(%Type{}, any()) :: any()
-  def map_id(type, resource), do: map_value(type, resource, type.id)
+  @spec map_id(any(), %Type{}) :: any()
+  def map_id(resource, type), do: map_value(resource, type, type.id)
 
   @doc """
   Maps a value for a given field name for a resource.
@@ -343,15 +361,16 @@ defmodule Resourceful.Type do
   @spec map_value(map(), %Type{}, field_name()) :: any()
   def map_value(resource, %Type{} = type, name) do
     case map_field(type, name) do
-      {:ok, path} -> get_with_path(resource, path)
+      {:ok, path} when is_list(path) -> get_with_path(resource, path)
+      {:ok, key} -> Map.get(resource, key)
       _ -> nil
     end
   end
 
-  defp get_with_path(data, []), do: data
+  defp get_with_path(resource, []), do: resource
 
-  defp get_with_path(%{} = data, [key | path]) do
-    data
+  defp get_with_path(%{} = resource, [key | path]) do
+    resource
     |> Map.get(key)
     |> get_with_path(path)
   end
@@ -377,21 +396,36 @@ defmodule Resourceful.Type do
 
   @doc """
   Sets `max_depth` on a type.
+
+  `max_depth` is specifically a reference to the depth of relationships that
+  will be transversed. This means the default `max_depth` of `1` would expose
+  all immediate relationships and their attributes.
+
+  For example, a song type with a `max_depth` of `1` would be able to graph
+  through `album` and query against `album.title` but would not be able to
+  access `album.artist` or any of its attributes. Increasing the `max_depth` to
+  `2` would expose `album.artist.name`.
   """
   @spec max_depth(%Type{}, integer()) :: %Type{}
   def max_depth(type, max_depth), do: put(type, :max_depth, opt_max(max_depth))
 
   @doc """
-  Sets `max_filters` on a type.
+  Sets `max_filters` on a type. This is the total number of filters allowed in
+  a single query.
   """
   @spec max_filters(%Type{}, integer()) :: %Type{}
-  def max_filters(type, max_filters), do: put(type, :max_filters, opt_max(max_filters))
+  def max_filters(type, max_filters) do
+    put(type, :max_filters, opt_max_or_nil(max_filters))
+  end
 
   @doc """
-  Sets `max_sorters` on a type.
+  Sets `max_sorters` on a type. This is the total number of sorts allowed in a
+  single query.
   """
   @spec max_sorters(%Type{}, integer()) :: %Type{}
-  def max_sorters(type, max_sorters), do: put(type, :max_sorters, opt_max(max_sorters))
+  def max_sorters(type, max_sorters) do
+    put(type, :max_sorters, opt_max_or_nil(max_sorters))
+  end
 
   @doc """
   Adds a value to the `meta` map. Meta information is not used by types directly
@@ -461,6 +495,17 @@ defmodule Resourceful.Type do
   end
 
   @doc """
+  Returns a valid mapping name for a field. Any atom or string is valid and
+  should map to the whatever the underlying resources will look like.
+  """
+  @spec validate_map_to!(atom() | String.t()) :: atom() | String.t()
+  def validate_map_to!(map_to)
+      when is_atom(map_to) or is_binary(map_to),
+      do: map_to
+
+  def validate_map_to!(_), do: raise(InvalidMapTo)
+
+  @doc """
   Validates that the max number of filters hasn't been exceeded.
   """
   @spec validate_max_filters(list(), %Type{}, map()) :: list()
@@ -477,22 +522,11 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-  Validates a single sorter on an attribute.
-  """
-  @spec validate_sorter(%Type{}, any()) :: {:ok, Sort.t()} | Error.t()
-  def validate_sorter(type, sorter) do
-    with {:ok, {order, field_name}} <- Sort.cast(sorter),
-         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
-         {:ok, _} = ok <- Attribute.validate_sorter(attr_or_graph, order),
-         do: ok
-  end
-
-  @doc """
   Returns a valid string name for a type or field. Technically any string
   without a period is valid, but like most names, don't go nuts with URL
   characters, whitespace, etc.
   """
-  @spec validate_name!(String.t() | atom()) :: String.t()
+  @spec validate_name!(atom() | String.t()) :: String.t()
   def validate_name!(name) when is_atom(name) do
     name
     |> to_string()
@@ -502,6 +536,17 @@ defmodule Resourceful.Type do
   def validate_name!(name) when is_binary(name) do
     if String.match?(name, ~r/\./), do: raise(InvalidName)
     name
+  end
+
+  @doc """
+  Validates a single sorter on an attribute.
+  """
+  @spec validate_sorter(%Type{}, any()) :: {:ok, Sort.t()} | Error.t()
+  def validate_sorter(type, sorter) do
+    with {:ok, {order, field_name}} <- Sort.cast(sorter),
+         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
+         {:ok, _} = ok <- Attribute.validate_sorter(attr_or_graph, order),
+         do: ok
   end
 
   @doc """
@@ -518,7 +563,7 @@ defmodule Resourceful.Type do
 
   defp fetch!(_, {:ok, ok}), do: ok
 
-  defp fetch!(name, {:error}) do
+  defp fetch!(name, {:error, _}) do
     raise FieldError, message: "field #{inspect(name)} not found"
   end
 

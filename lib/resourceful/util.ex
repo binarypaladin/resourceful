@@ -1,4 +1,18 @@
 defmodule Resourceful.Util do
+  @moduledoc """
+  Extra utility functions. These are for miscellaneous shared functions that
+  don't really fit with any other module but are shared across multiple modules.
+  """
+
+  @doc """
+  Allows `:except` or `:only` options to be set in a keyword set of options. The
+  options and the set are given as arguments and, depending on the options, a
+  subset (or the set itself) will be returned.
+
+  An exception will be raised if invalid arguments are passed or if both
+  `:except` and `:only` are passed.
+  """
+  @spec except_or_only!(keyword(), %MapSet{} | list()) :: list()
   def except_or_only!(opts, set) do
     set = MapSet.new(set)
     except = Keyword.get(opts, :except)

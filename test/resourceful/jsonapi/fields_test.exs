@@ -5,7 +5,7 @@ defmodule Resourceful.JSONAPI.FieldsTest do
   alias Resourceful.Test.Types
 
   test "validate/2" do
-    type = Types.get("albums")
+    type = Types.fetch!("albums")
 
     assert Fields.validate(type, %{"albums" => "releaseDate,title", "artists" => "name"}) ==
              %{"albums" => [ok: "releaseDate", ok: "title"], "artists" => [ok: "name"]}
