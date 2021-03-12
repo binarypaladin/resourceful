@@ -66,7 +66,7 @@ defmodule Resourceful.JSONAPI.Fields do
     fields
     |> Stream.with_index()
     |> Enum.map(fn {field, index} ->
-      case Type.has_field?(type, field) do
+      case Type.has_local_field?(type, field) do
         true ->
           {:ok, field}
 
