@@ -6,7 +6,7 @@ defmodule Resourceful.JSONAPI.IncludeTest do
   alias Resourceful.Type
 
   test "validate/2" do
-    songs = Types.get("songs")
+    songs = Types.fetch!("songs")
 
     assert Include.validate(songs, "album,album.artist") ==
              [
@@ -14,7 +14,7 @@ defmodule Resourceful.JSONAPI.IncludeTest do
                Type.fetch_relationship(songs, "album.artist")
              ]
 
-    albums = Types.get("albums")
+    albums = Types.fetch!("albums")
 
     assert Include.validate(albums, "artist,publisher,songs") ==
              [
