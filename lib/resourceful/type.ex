@@ -82,6 +82,10 @@ defmodule Resourceful.Type do
     defexception message: "names cannot contain periods (\".\")"
   end
 
+  defmodule InvalidMapTo do
+    defexception message: "only atoms and strings may be used for mapping"
+  end
+
   import Map, only: [put: 3]
 
   alias __MODULE__
@@ -491,6 +495,17 @@ defmodule Resourceful.Type do
   end
 
   @doc """
+  Returns a valid mapping name for a field. Any atom or string is valid and
+  should map to the whatever the underlying resources will look like.
+  """
+  @spec validate_map_to!(atom() | String.t()) :: atom() | String.t()
+  def validate_map_to!(map_to)
+      when is_atom(map_to) or is_binary(map_to),
+      do: map_to
+
+  def validate_map_to!(_), do: raise(InvalidMapTo)
+
+  @doc """
   Validates that the max number of filters hasn't been exceeded.
   """
   @spec validate_max_filters(list(), %Type{}, map()) :: list()
@@ -507,22 +522,11 @@ defmodule Resourceful.Type do
   end
 
   @doc """
-  Validates a single sorter on an attribute.
-  """
-  @spec validate_sorter(%Type{}, any()) :: {:ok, Sort.t()} | Error.t()
-  def validate_sorter(type, sorter) do
-    with {:ok, {order, field_name}} <- Sort.cast(sorter),
-         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
-         {:ok, _} = ok <- Attribute.validate_sorter(attr_or_graph, order),
-         do: ok
-  end
-
-  @doc """
   Returns a valid string name for a type or field. Technically any string
   without a period is valid, but like most names, don't go nuts with URL
   characters, whitespace, etc.
   """
-  @spec validate_name!(String.t() | atom()) :: String.t()
+  @spec validate_name!(atom() | String.t()) :: String.t()
   def validate_name!(name) when is_atom(name) do
     name
     |> to_string()
@@ -532,6 +536,17 @@ defmodule Resourceful.Type do
   def validate_name!(name) when is_binary(name) do
     if String.match?(name, ~r/\./), do: raise(InvalidName)
     name
+  end
+
+  @doc """
+  Validates a single sorter on an attribute.
+  """
+  @spec validate_sorter(%Type{}, any()) :: {:ok, Sort.t()} | Error.t()
+  def validate_sorter(type, sorter) do
+    with {:ok, {order, field_name}} <- Sort.cast(sorter),
+         {:ok, attr_or_graph} <- fetch_attribute(type, field_name),
+         {:ok, _} = ok <- Attribute.validate_sorter(attr_or_graph, order),
+         do: ok
   end
 
   @doc """

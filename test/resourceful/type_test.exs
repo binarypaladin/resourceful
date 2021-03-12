@@ -281,6 +281,15 @@ defmodule Resourceful.TypeTest do
                %{attribute: "artist.name", operator: "et", value: "Duran Duran"}}}
   end
 
+  test "validate_map_to!/1" do
+    assert Type.validate_map_to!(:name) == :name
+    assert Type.validate_map_to!("name") == "name"
+
+    assert_raise Type.InvalidMapTo, fn ->
+      Type.validate_map_to!([])
+    end
+  end
+
   test "validate_max_filters/3" do
     type = Type.max_filters(registered_type(), 1)
     filters = [Type.validate_filter(type, {"artist", "Duran Duran"})]
@@ -313,15 +322,6 @@ defmodule Resourceful.TypeTest do
     end
   end
 
-  test "without_cache/1" do
-    type =
-      type()
-      |> Type.cache(:key, "value")
-      |> Type.without_cache()
-
-    assert type.cache == %{}
-  end
-
   test "validate_sorter/2" do
     type = registered_type()
     field = Type.fetch_field!(type, "releaseDate")
@@ -332,5 +332,14 @@ defmodule Resourceful.TypeTest do
 
     assert Type.validate_sorter(type, "-releaseDat") ==
              {:error, {:attribute_not_found, %{key: "releaseDat", resource_type: "albums"}}}
+  end
+
+  test "without_cache/1" do
+    type =
+      type()
+      |> Type.cache(:key, "value")
+      |> Type.without_cache()
+
+    assert type.cache == %{}
   end
 end
