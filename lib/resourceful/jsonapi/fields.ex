@@ -47,8 +47,8 @@ defmodule Resourceful.JSONAPI.Fields do
 
   defp validate_field_type(type, type_name) do
     case Type.fetch_related_type(type, type_name) do
-      :error -> Error.with_key(:invalid_field_type, type_name)
-      ok -> ok
+      {:ok, _} = ok -> ok
+      _ -> Error.with_key(:invalid_field_type, type_name)
     end
   end
 
