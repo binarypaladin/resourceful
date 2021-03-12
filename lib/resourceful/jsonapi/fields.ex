@@ -1,7 +1,7 @@
 defmodule Resourceful.JSONAPI.Fields do
   @moduledoc """
   Functions for validating fields, primarily for use with JSON:API
-  [sparse fieldsets](https://jsonapi.org/format/#fetching-sparse-fieldsets].
+  [sparse fieldsets](https://jsonapi.org/format/#fetching-sparse-fieldsets).
   Fields are provided by type type_name in requests and not inferred from root or
   relationship names. This means that if a type has multiple relationships
   pointing to a single type or a self-referential relationships, these will
