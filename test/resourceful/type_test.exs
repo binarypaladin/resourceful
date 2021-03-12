@@ -111,7 +111,7 @@ defmodule Resourceful.TypeTest do
     assert Type.validate_filter(type, {"artist.name eq", "Duran Duran"}) == ok
 
     assert Type.validate_filter(type, {"artist.nam", "Duran Duran"}) ==
-             {:error, {:field_not_found, %{key: "artist.nam", resource_type: "albums"}}}
+             {:error, {:attribute_not_found, %{key: "artist.nam", resource_type: "albums"}}}
 
     assert Type.validate_filter(type, {"artist.name et", "Duran Duran"}) ==
              {:error,
@@ -152,6 +152,6 @@ defmodule Resourceful.TypeTest do
     assert Type.validate_sorter(type, "-releaseDate") == ok
 
     assert Type.validate_sorter(type, "-releaseDat") ==
-             {:error, {:field_not_found, %{key: "releaseDat", resource_type: "albums"}}}
+             {:error, {:attribute_not_found, %{key: "releaseDat", resource_type: "albums"}}}
   end
 end

@@ -198,27 +198,23 @@ defmodule Resourceful.Type do
   Fetches a local attribute or, if a registry is set, a graphed attribute.
   """
   @spec fetch_attribute(%Type{}, field_name()) ::
-          {:ok, %Attribute{} | %GraphedField{}} | Error.t()
-  def fetch_attribute(%{registry: nil} = type, name) do
-    fetch_local_attribute(type, name)
+          {:ok, %Attribute{} | %GraphedField{field: %Attribute{}}} | Error.t()
+  def fetch_attribute(type, name) do
+    fetch_field(type, name, error_type: :attribute_not_found, field_type: [Attribute])
   end
-
-  def fetch_attribute(type, name), do: fetch_graphed_attribute(type, name)
-
-  @doc """
-  Same as `fetch_attribute/2` but raises `FieldError` if the attribute isn't
-  present.
-  """
-  @spec fetch_attribute!(%Type{}, field_name()) :: %Attribute{}
-  def fetch_attribute!(type, name), do: fetch!(name, fetch_attribute(type, name))
 
   @doc """
   Fetches a local field or, if a registry is set, a graphed field.
   """
-  @spec fetch_field(%Type{}, field_name()) :: {:ok, field() | %GraphedField{}} | Error.t()
-  def fetch_field(%{registry: nil} = type, name), do: fetch_local_field(type, name)
+  @spec fetch_field(%Type{}, field_name(), keyword()) ::
+          {:ok, field() | %GraphedField{}} | Error.t()
+  def fetch_field(type, name, opts \\ [])
 
-  def fetch_field(type, name), do: fetch_graphed_field(type, name)
+  def fetch_field(%{registry: nil} = type, name, opts) do
+    fetch_local_field(type, name, opts)
+  end
+
+  def fetch_field(type, name, opts), do: fetch_graphed_field(type, name, opts)
 
   @doc """
   Same as `fetch_field/2` but raises `FieldError` if the field isn't present.
@@ -227,41 +223,23 @@ defmodule Resourceful.Type do
   def fetch_field!(type, name), do: fetch!(name, fetch_field(type, name))
 
   @doc """
-  Same as `fetch_graphed_field/2` except it will _only_ return attributes rather
-  than any field. Queries work on attributes and not resources, so in those
-  cases, this should be used.
-  """
-  @spec fetch_graphed_attribute(%Type{}, field_name()) :: {:ok, %GraphedField{}} | Error.t()
-  def fetch_graphed_attribute(type, name) do
-    with {:ok, graphed} <- fetch_graphed_field(type, name) do
-      case graphed.field do
-        %Attribute{} -> {:ok, graphed}
-        _ -> field_error(:invalid_attribute, type, name)
-      end
-    end
-  end
-
-  @doc """
-  Same as `fetch_graphed_attribute/2` but raises `FieldError` if the graphed
-  attribute isn't present.
-  """
-  @spec fetch_graphed_attribute!(%Type{}, field_name()) :: %GraphedField{}
-  def fetch_graphed_attribute!(type, name), do: fetch!(name, fetch_graphed_attribute(type, name))
-
-  @doc """
   Fetches a field with related graph data using the resource's field graphs.
   """
-  @spec fetch_graphed_field(%Type{}, field_name()) :: {:ok, %GraphedField{}} | Error.t()
-  def fetch_graphed_field(type, name) when is_list(name) do
-    fetch_graphed_field(type, string_name(name))
+  @spec fetch_graphed_field(%Type{}, field_name(), keyword()) ::
+          {:ok, %GraphedField{}} | Error.t()
+  def fetch_graphed_field(type, name, opts \\ [])
+
+  def fetch_graphed_field(type, name, opts) when is_list(name) do
+    fetch_graphed_field(type, string_name(name), opts)
   end
 
-  def fetch_graphed_field(type, name) do
-    with {:ok, field_graph} <- field_graph(type) do
-      case Map.get(field_graph, name) do
-        nil -> field_error(:field_not_found, type, name)
-        graphed_field -> {:ok, graphed_field}
-      end
+  def fetch_graphed_field(type, name, opts) do
+    with {:ok, field_graph} <- field_graph(type),
+         {:ok, graphed_field} = ok <- Map.fetch(field_graph, name),
+         true <- field_is?(graphed_field.field, opts) do
+      ok
+    else
+      _ -> not_found_error(type, name, opts)
     end
   end
 
@@ -273,31 +251,15 @@ defmodule Resourceful.Type do
   def fetch_graphed_field!(type, name), do: fetch!(name, fetch_graphed_field(type, name))
 
   @doc """
-  Fetches a local attribute by name.
-  """
-  @spec fetch_local_attribute(%Type{}, field_name()) :: {:ok, %Attribute{}} | Error.t()
-  def fetch_local_attribute(type, name) do
-    case fetch_field(type, name) do
-      {:ok, %Attribute{}} = ok -> ok
-      _ -> field_error(:attribute_not_found, type, name)
-    end
-  end
-
-  @doc """
-  Same as `fetch_local_attribute/2` but raises `FieldError` if the local field
-  isn't present.
-  """
-  @spec fetch_local_attribute!(%Type{}, field_name()) :: %Attribute{}
-  def fetch_local_attribute!(type, name), do: fetch!(name, fetch_local_attribute(type, name))
-
-  @doc """
   Fetches a local field by name.
   """
   @spec fetch_local_field(%Type{}, String.t()) :: {:ok, field()} | Error.t()
-  def fetch_local_field(type, name) do
-    case Map.fetch(type.fields, name) do
-      :error -> field_error(:field_not_found, type, name)
-      ok -> ok
+  def fetch_local_field(type, name, opts \\ []) do
+    with {:ok, field} = ok <- Map.fetch(type.fields, name),
+         true <- field_is?(field, opts) do
+      ok
+    else
+      _ -> not_found_error(type, name, opts)
     end
   end
 
@@ -306,7 +268,9 @@ defmodule Resourceful.Type do
   present.
   """
   @spec fetch_local_field!(%Type{}, field_name()) :: %GraphedField{}
-  def fetch_local_field!(type, name), do: fetch!(name, fetch_local_field(type, name))
+  def fetch_local_field!(type, name, opts \\ []) do
+    fetch!(name, fetch_local_field(type, name, opts))
+  end
 
   @doc """
   Fetches another type by name from a type's registry.
@@ -318,6 +282,15 @@ defmodule Resourceful.Type do
 
   def fetch_related_type(%Type{} = type, type_name) do
     with {:ok, registry} <- fetch_registry(type), do: registry.fetch(type_name)
+  end
+
+  @doc """
+  Fetches a local relationship or, if a registry is set, a graphed relationship.
+  """
+  @spec fetch_relationship(%Type{}, field_name()) ::
+          {:ok, %Relationship{} | %GraphedField{field: %Relationship{}}} | Error.t()
+  def fetch_relationship(type, name) do
+    fetch_field(type, name, error_type: :relationship_not_found, field_type: [Relationship])
   end
 
   @doc """
@@ -553,10 +526,20 @@ defmodule Resourceful.Type do
     type_error(:no_type_registry, type)
   end
 
-  defp fetch_registry(%{registry: registry}), do: {:ok, registry}
+  defp field_is?(%module{}, opts) do
+    module in Keyword.get(opts, :field_type, [Attribute, Relationship])
+  end
 
   defp field_error(error, type, name, context \\ %{}) do
     type_error(error, type, Map.put(context, :key, string_name(name)))
+  end
+
+  defp fetch_registry(%{registry: registry}), do: {:ok, registry}
+
+  defp not_found_error(type, name, opts) do
+    opts
+    |> Keyword.get(:error_type, :field_not_found)
+    |> field_error(type, name)
   end
 
   defp put_in_struct(type, struct_key, map_key, value) do

@@ -80,7 +80,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                  }},
               error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}},
               error:
-                {:field_not_found,
+                {:attribute_not_found,
                  %{
                    input: "-releaseDate,titl",
                    key: "titl",
