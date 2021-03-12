@@ -64,6 +64,4 @@ defmodule Resourceful.Type.Relationship do
   def name(%Relationship{} = rel, name), do: Map.put(rel, :name, Type.validate_name!(name))
 
   defp check_type!(type) when type in [:many, :one], do: type
-
-  defp opt_name(name) when is_binary(name), do: name
 end

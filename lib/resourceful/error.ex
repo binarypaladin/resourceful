@@ -274,8 +274,6 @@ defmodule Resourceful.Error do
     do_from_changeset(errors, data)
   end
 
-  defp do_from_changeset(errors, data \\ %{})
-
   defp do_from_changeset(errors, %{} = data) when is_list(errors) do
     Enum.map(errors, &do_from_changeset(&1, data))
   end
