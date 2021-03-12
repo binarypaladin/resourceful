@@ -83,13 +83,13 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                    type: :date
                  }},
               error:
-                 {:cannot_include_relationship,
-                  %{
-                    input: "songs",
-                    key: "songs",
-                    resource_type: "albums",
-                    source: ["include"]
-                  }},
+                {:cannot_include_relationship,
+                 %{
+                   input: "songs",
+                   key: "songs",
+                   resource_type: "albums",
+                   source: ["include"]
+                 }},
               error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}},
               error:
                 {:attribute_not_found,
