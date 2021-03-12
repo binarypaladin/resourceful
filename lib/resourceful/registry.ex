@@ -19,7 +19,11 @@ defmodule Resourceful.Registry do
     defexception message: "result of block must be a `Resourceful.Type`"
   end
 
-  alias Resourceful.Type
+  defmodule NotRegisteredError do
+    defexception message: "type is not registered"
+  end
+
+  alias Resourceful.{Error, Type}
   alias Resourceful.Type.{GraphedField, Relationship}
 
   defmacro __using__(_) do
@@ -46,24 +50,38 @@ defmodule Resourceful.Registry do
 
       @rtypes %{}
 
-      def fetch(name), do: Map.fetch(all(), name)
+      def fetch(name), do: unquote(__MODULE__).fetch(all(), name)
 
-      def fetch!(name), do: Map.fetch!(all(), name)
+      def fetch!(name), do: unquote(__MODULE__).fetch!(all(), name)
 
-      def get(name), do: Map.get(all(), name)
+      def fetch_field_graph(name), do: unquote(__MODULE__).fetch(field_graphs(), name)
 
-      def get_field_graph(name), do: Map.get(field_graphs(), name)
-
-      def fetch_field_graph(name), do: Map.fetch(field_graphs(), name)
-
-      def fetch_field_graph!(name), do: Map.fetch!(field_graphs(), name)
+      def fetch_field_graph!(name), do: unquote(__MODULE__).fetch!(field_graphs(), name)
 
       def has_type?(name), do: Map.has_key?(all(), name)
     end
   end
 
   @doc """
+  Builds a field graph for a `Resourceful.Type`. Since types have a `max_depth`,
+  all possible graphed fields can be computed and cached at compile time when
+  using a registry. This allows nested fields to be treated like local fields in
+  the sense that they are available in a flat map.
 
+  For example, a song type would have a `title` field. Once graphed, it would
+  also have an `album.title` field. If the depth was set to 2, access to a field
+  like `album.artist.name` would also be available.
+
+  This prevents a lot of recursion logic from being applied at every lookup and
+  by instecting the field graph for a type it's easy to see all of the possible
+  mappings.
+
+  Graphed fields are wrapped in a `Resourceful.Type.GraphedField` struct which
+  contains relational information about the field in addition to the field data
+  itself.
+
+  See `Resourceful.Type.max_depth/2` for information about what is intended to
+  be included in a field graph based on the depth setting.
   """
   @spec build_field_graph(%{String.t() => %Type{}}, String.t()) :: Type.field_graph()
   def build_field_graph(types_map, type_name) do
@@ -120,13 +138,52 @@ defmodule Resourceful.Registry do
   defp qualify_name(prefix, name), do: "#{prefix}.#{name}"
 
   @doc """
-
+  A name can be optionally passed to the `type/2` macro. If provided, this name
+  will override the name of the resource created in provided block.
   """
   @spec maybe_put_name(%Type{}, String.t() | nil) :: %Type{}
   def maybe_put_name(%Type{} = type, nil), do: type
 
   def maybe_put_name(%Type{} = type, name) when is_binary(name) do
     Type.name(type, name)
+  end
+
+  @spec fetch(map(), String.t()) :: {:ok, %Type{}} | Error.contextual()
+  def fetch(rtypes, name) do
+    case Map.get(rtypes, name) do
+      nil -> Error.with_key(:resource_type_not_registered, name)
+      type -> {:ok, type}
+    end
+  end
+
+  @spec fetch!(map(), String.t()) :: %Type{}
+  def fetch!(rtypes, name) do
+    case Map.get(rtypes, name) do
+      nil -> raise NotRegisteredError, "type with name `#{name}` is not registered"
+      type -> type
+    end
+  end
+
+  @spec fetch_field_graph(map(), String.t() | %Type{}) ::
+          {:ok, %{String.t() => %GraphedField{}}} | Error.contextual()
+  def fetch_field_graph(field_graphs, %Type{name: name}) do
+    fetch_field_graph(field_graphs, name)
+  end
+
+  def fetch_field_graph(field_graphs, name) do
+    case Map.get(field_graphs, name) do
+      nil -> Error.with_key(:field_graphs_not_registered, name)
+      graphed_field -> {:ok, graphed_field}
+    end
+  end
+
+  @spec fetch_field_graph!(map(), String.t() | %Type{}) ::
+          %{String.t() => %GraphedField{}}
+  def fetch_field_graph!(field_graphs, name) do
+    case Map.get(field_graphs, name) do
+      nil -> raise NotRegisteredError, "field graph for `#{name}` is not registered"
+      field_graph -> field_graph
+    end
   end
 
   @doc """
@@ -145,6 +202,14 @@ defmodule Resourceful.Registry do
 
   def validate_type!(_, _), do: raise(__MODULE__.InvalidType)
 
+  @doc """
+  Assigns the resource specified in the `block` and makes it part of the
+  registry. If `name` is provided, it will rename the resource and use that
+  `name` as the key.
+
+  If `block` does not result in a `Resourceful.Type` an exception will be
+  raised.
+  """
   defmacro type(name \\ nil, do: block) do
     quote do
       @rtype unquote(block)

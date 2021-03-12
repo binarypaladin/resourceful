@@ -6,7 +6,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   alias Resourceful.Type
 
   test "validate/3 with valid params" do
-    type = Types.get("albums")
+    type = Types.fetch!("albums")
 
     params = %{
       "fields" => %{"albums" => "releaseDate,title"},
@@ -35,7 +35,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   end
 
   test "validate/3 with invalid params" do
-    type = Types.get("albums")
+    type = Types.fetch!("albums")
 
     params = %{
       "fields" => "albums",
@@ -54,7 +54,7 @@ defmodule Resourceful.JSONAPI.ParamsTest do
   end
 
   test "validate/3 with invalid type values" do
-    type = Types.get("albums")
+    type = Types.fetch!("albums")
 
     params = %{
       "fields" => %{"albums" => ["releaseDate", "titl"]},
