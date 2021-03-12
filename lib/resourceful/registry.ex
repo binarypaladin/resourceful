@@ -20,6 +20,7 @@ defmodule Resourceful.Registry do
   end
 
   alias Resourceful.Type
+  alias Resourceful.Type.{GraphedField, Relationship}
 
   defmacro __using__(_) do
     quote do
@@ -85,12 +86,11 @@ defmodule Resourceful.Registry do
       new_map_to = map_to_prefix ++ [field.map_to]
       new_name = qualify_name(name_prefix, name)
 
-      field_data = Type.GraphedField.new(field, new_name, new_map_to, parent)
-
-      new_field_graph = Map.put(new_field_graph, new_name, field_data)
+      field_data = GraphedField.new(field, new_name, new_map_to, parent)
+      new_field_graph = maybe_put_field_data(new_field_graph, field_data, depth)
 
       case field do
-        %Type.Relationship{graph?: true} ->
+        %Relationship{graph?: true} ->
           do_build_field_graph(
             new_field_graph,
             types_map,
@@ -105,6 +105,14 @@ defmodule Resourceful.Registry do
           new_field_graph
       end
     end)
+  end
+
+  defp maybe_put_field_data(field_graph, %GraphedField{field: %Relationship{}}, 0) do
+    field_graph
+  end
+
+  defp maybe_put_field_data(field_graph, graphed_field, _) do
+    Map.put(field_graph, graphed_field.name, graphed_field)
   end
 
   defp qualify_name(nil, name), do: name
