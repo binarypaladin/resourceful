@@ -4,8 +4,6 @@ defmodule Resourceful.Type.AttributeTest do
   alias Resourceful.Type.Attribute
   alias Resourceful.Test.Album
 
-  @resource %{artist: "David Bowie"}
-
   def attr, do: Attribute.new(:artist, :string)
 
   test "new/3" do

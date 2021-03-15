@@ -14,7 +14,7 @@ defmodule Resourceful.MixProject do
     ]
   end
 
-  def application, do: [applications: []]
+  def application, do: [applications: [], extra_applications: [:ecto]]
 
   defp deps do
     [

@@ -177,13 +177,6 @@ defmodule Resourceful.Type do
 
   defp opt_meta(%{} = map), do: map
 
-  defp opt_with_name({new_name, %{name: current_name} = attr_or_rel}) do
-    case new_name == current_name do
-      true -> attr_or_rel
-      _ -> %{attr_or_rel | name: new_name}
-    end
-  end
-
   @doc """
   Sets a key in the `cache` map. Because types generally intended to be static
   at compile time, it can make sense to cache certain values and have functions
@@ -571,6 +564,8 @@ defmodule Resourceful.Type do
     type_error(:no_type_registry, type)
   end
 
+  defp fetch_registry(%{registry: registry}), do: {:ok, registry}
+
   defp field_is?(%module{}, opts) do
     module in Keyword.get(opts, :field_type, [Attribute, Relationship])
   end
@@ -578,8 +573,6 @@ defmodule Resourceful.Type do
   defp field_error(error, type, name, context \\ %{}) do
     type_error(error, type, Map.put(context, :key, string_name(name)))
   end
-
-  defp fetch_registry(%{registry: registry}), do: {:ok, registry}
 
   defp not_found_error(type, name, opts) do
     opts
