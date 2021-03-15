@@ -52,11 +52,11 @@ defmodule Resourceful.Type.GraphedField do
     query_alias_with(map_to, nil)
   end
 
+  defp query_alias_with([], attr_name), do: attr_name
+
   defp query_alias_with(map_to, attr_name) do
     {maybe_atomize(map_to), attr_name}
   end
-
-  defp maybe_atomize([]), do: nil
 
   defp maybe_atomize(map_to) do
     map_to

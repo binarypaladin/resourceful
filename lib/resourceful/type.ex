@@ -283,7 +283,7 @@ defmodule Resourceful.Type do
   present.
 
   Unless you have a specific reason for fetching local fields, use
-  `fetch_field@/3` instead.
+  `fetch_field/3` instead.
   """
   @spec fetch_local_field!(%Type{}, field_name()) :: %GraphedField{}
   def fetch_local_field!(type, name, opts \\ []) do
