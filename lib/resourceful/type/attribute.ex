@@ -57,9 +57,13 @@ defmodule Resourceful.Type.Attribute do
       map_to: Type.validate_map_to!(map_to),
       name: Type.validate_name!(name),
       sort?: opt_bool(Keyword.get(opts, :sort)),
-      type: as_atom(type)
+      type: to_type(type)
     }
   end
+
+  defp to_type(type) when is_binary(type), do: as_atom(type)
+
+  defp to_type(type), do: type
 
   @doc """
   Casts an input into an attribute's type. If `cast_as_list` is true, it will
@@ -152,8 +156,8 @@ defmodule Resourceful.Type.Attribute do
   Sets the data type for casting. This must be an `Ecto.Type` or atom that works
   in its place such as `:string`.
   """
-  @spec type(%Attribute{}, atom()) :: %Attribute{}
-  def type(attr, type), do: put_atom(attr, :type, type)
+  @spec type(%Attribute{}, any()) :: %Attribute{}
+  def type(attr, type), do: put(attr, :type, to_type(type))
 
   @doc """
   Validates a filter against the attribute and the data given. It ensures the
@@ -207,10 +211,6 @@ defmodule Resourceful.Type.Attribute do
       true -> opts
     end
   end
-
-  defp put_atom(attr, key, value) when is_atom(value), do: put(attr, key, value)
-
-  defp put_atom(attr, key, value) when is_binary(value), do: put(attr, key, as_atom(value))
 
   defp validate_filter_with_operator(attr_or_graph, op, val) do
     case Filter.valid_operator?(op, val) do
