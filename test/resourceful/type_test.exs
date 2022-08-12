@@ -68,8 +68,7 @@ defmodule Resourceful.TypeTest do
     type = type()
     rtype = registered_type()
 
-    not_found_err =
-      {:error, {:field_not_found, %{key: "notPresent", resource_type: "albums"}}}
+    not_found_err = {:error, {:field_not_found, %{key: "notPresent", resource_type: "albums"}}}
 
     assert Type.fetch_field(type, "notPresent") == not_found_err
     assert Type.fetch_field(rtype, "notPresent") == not_found_err
@@ -77,7 +76,7 @@ defmodule Resourceful.TypeTest do
     assert Type.fetch_field(type, "tracks") == {:ok, attributes()["tracks"]}
 
     assert Type.fetch_field(rtype, "tracks") ==
-      {:ok, rtype.registry.fetch_field_graph!("albums")["tracks"]}
+             {:ok, rtype.registry.fetch_field_graph!("albums")["tracks"]}
 
     assert {:ok, %GraphedField{field: %Attribute{name: "name"}, name: "artist.name"}} =
              Type.fetch_field(rtype, "artist.name")
@@ -108,6 +107,7 @@ defmodule Resourceful.TypeTest do
 
   test "fetch_graphed_field!/3" do
     rtype = registered_type()
+
     assert {:ok, Type.fetch_graphed_field!(rtype, "artist.name")} ==
              Type.fetch_graphed_field(rtype, "artist.name")
 
@@ -121,15 +121,16 @@ defmodule Resourceful.TypeTest do
     rtype = registered_type()
 
     assert Type.fetch_local_field(type, "tracks") == Type.fetch_field(type, "tracks")
+
     assert Type.fetch_local_field(rtype, "tracks") ==
              {:ok, Type.fetch_field!(rtype, "tracks").field}
 
-    assert {:error, {:field_not_found, _}} =
-             Type.fetch_local_field(rtype, "artist.name")
+    assert {:error, {:field_not_found, _}} = Type.fetch_local_field(rtype, "artist.name")
   end
 
   test "fetch_local_field!/3" do
     type = type()
+
     assert {:ok, Type.fetch_local_field!(type, "tracks")} ==
              Type.fetch_local_field(type, "tracks")
 

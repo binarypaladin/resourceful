@@ -9,6 +9,7 @@ defmodule Resourceful.MixProject do
       elixir: "~> 1.10",
       name: "Resourceful",
       package: package(),
+      source_url: "https://github.com/binarypaladin/resourceful",
       start_permanent: Mix.env() == :prod,
       version: "0.1.0"
     ]
@@ -20,7 +21,7 @@ defmodule Resourceful.MixProject do
     [
       {:ecto, "~> 3.4"},
       {:ecto_sql, "~> 3.4", only: [:test]},
-      {:inflex, "~> 2.0.0", only: [:test]},
+      {:inflex, "~> 2.0", only: [:test]},
       {:postgrex, ">= 0.0.0", only: [:test]}
     ]
   end
@@ -28,6 +29,7 @@ defmodule Resourceful.MixProject do
   defp package do
     %{
       licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/binarypaladin/resourceful"},
       maintainers: ["Joshua Hansen"]
     }
   end
