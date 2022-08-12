@@ -22,7 +22,8 @@ defmodule Resourceful.MixProject do
       {:ecto, "~> 3.4"},
       {:ecto_sql, "~> 3.4", only: [:test]},
       {:inflex, "~> 2.0", only: [:test]},
-      {:postgrex, ">= 0.0.0", only: [:test]}
+      {:postgrex, ">= 0.0.0", only: [:test]},
+      {:ex_doc, ">= 0.0.0", only: [:dev], runtime: false}
     ]
   end
 
