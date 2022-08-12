@@ -5,7 +5,7 @@ defmodule Resourceful.MixProject do
     [
       app: :resourceful,
       deps: deps(),
-      description: "",
+      description: "A type and query toolkit for web-based APIs.",
       elixir: "~> 1.10",
       name: "Resourceful",
       package: package(),
