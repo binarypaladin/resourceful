@@ -35,6 +35,7 @@ defmodule Resourceful.Type.Attribute do
   alias Resourceful.Type.GraphedField
 
   @enforce_keys [
+    :embedded_type,
     :filter?,
     :map_to,
     :name,
@@ -53,6 +54,7 @@ defmodule Resourceful.Type.Attribute do
     map_to = Keyword.get(opts, :map_to) || as_atom(name)
 
     %Attribute{
+      embedded_type: validate_embedded_type!(Keyword.get(opts, :embedded_type)),
       filter?: opt_bool(Keyword.get(opts, :filter)),
       map_to: Type.validate_map_to!(map_to),
       name: Type.validate_name!(name),
@@ -64,6 +66,19 @@ defmodule Resourceful.Type.Attribute do
   defp to_type(type) when is_binary(type), do: as_atom(type)
 
   defp to_type(type), do: type
+
+  defp validate_embedded_type!(nil), do: nil
+
+  defp validate_embedded_type!(%Type{} = type), do: type
+
+  defp validate_embedded_type!(registered_type)
+       when is_binary(registered_type),
+       do: registered_type
+
+  defp validate_embedded_type!(_invalid_embedded_type) do
+    raise ArgumentError,
+      message: "`:embedded_type` must be `nil`, a string, or a `Resourceful.Type`."
+  end
 
   @doc """
   Casts an input into an attribute's type. If `cast_as_list` is true, it will
