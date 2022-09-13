@@ -165,6 +165,8 @@ defmodule Resourceful.Type do
 
   defp opt_id(nil), do: nil
 
+  defp opt_id([]), do: nil
+
   defp opt_id([id_attribute | []]), do: opt_id(id_attribute)
 
   defp opt_id(id_attribute) when is_atom(id_attribute), do: to_string(id_attribute)
