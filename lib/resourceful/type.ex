@@ -93,6 +93,8 @@ defmodule Resourceful.Type do
   alias Resourceful.Error
   alias Resourceful.Collection.{Filter, Sort}
 
+  @type t :: %__MODULE__{}
+
   @typedoc """
   A field is an attribute or a relationship. They share the same namespace
   within a type.
