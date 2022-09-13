@@ -213,6 +213,7 @@ defmodule Resourceful.Registry do
   defmacro type(name \\ nil, do: block) do
     quote do
       @rtype unquote(block)
+             |> Resourceful.Type.finalize()
              |> Resourceful.Type.register(__MODULE__)
              |> unquote(__MODULE__).maybe_put_name(unquote(name))
              |> unquote(__MODULE__).validate_type!(@rtypes)

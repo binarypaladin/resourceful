@@ -178,6 +178,16 @@ defmodule Resourceful.Type do
   defp opt_meta(%{} = map), do: map
 
   @doc """
+  Returns a list of the name of all attribute fields.
+  """
+  @spec attribute_names(t) :: [String.t()]
+  def attribute_names(%Type{cache: %{attributes: attrs}}), do: attrs
+
+  def attribute_names(%Type{fields: fields}) do
+    field_names_by(fields, Attribute)
+  end
+
+  @doc """
   Sets a key in the `cache` map. Because types generally intended to be static
   at compile time, it can make sense to cache certain values and have functions
   look for cached values in the cache map.
@@ -312,6 +322,14 @@ defmodule Resourceful.Type do
   def field_graph(type) do
     with {:ok, registry} <- fetch_registry(type),
          do: registry.fetch_field_graph(type.name)
+  end
+
+  def finalize(type) do
+    uncached_type = without_cache(type)
+
+    uncached_type
+    |> cache(:attributes, attribute_names(uncached_type))
+    |> cache(:relationships, relationship_names(uncached_type))
   end
 
   @doc """
@@ -458,6 +476,16 @@ defmodule Resourceful.Type do
   def register(type, module) when is_atom(module), do: put(type, :registry, module)
 
   @doc """
+  Returns a list of the name of all relationship fields.
+  """
+  @spec relationship_names(t) :: [String.t()]
+  def relationship_names(%Type{cache: %{relationships: rels}}), do: rels
+
+  def relationship_names(%Type{fields: fields}) do
+    field_names_by(fields, Relationship)
+  end
+
+  @doc """
   Returns a name as a dot-separated string.
   """
   @spec string_name(field_name()) :: String.t()
@@ -572,6 +600,15 @@ defmodule Resourceful.Type do
 
   defp field_error(error, type, name, context \\ %{}) do
     type_error(error, type, Map.put(context, :key, string_name(name)))
+  end
+
+  defp field_names_by(fields, module) do
+    fields
+    |> Enum.reduce([], fn
+      {name, %^module{}}, filtered_fields -> [name | filtered_fields]
+      _, filtered_fields -> filtered_fields
+    end)
+    |> Enum.sort()
   end
 
   defp not_found_error(type, name, opts) do
