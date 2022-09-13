@@ -46,7 +46,7 @@ defmodule Resourceful.Registry do
 
       import Resourceful.Type.Ecto, only: [type_with_schema: 1, type_with_schema: 2]
 
-      @before_compile {unquote(__MODULE__), :before_compile}
+      @before_compile {unquote(__MODULE__), :__before_compile__}
 
       @rtypes %{}
 
@@ -222,7 +222,7 @@ defmodule Resourceful.Registry do
     end
   end
 
-  defmacro before_compile(_) do
+  defmacro __before_compile__(_) do
     quote do
       def all(), do: @rtypes
 
