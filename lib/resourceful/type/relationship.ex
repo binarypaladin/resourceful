@@ -29,9 +29,10 @@ defmodule Resourceful.Type.Relationship do
   @type type() :: :many | :one
 
   @enforce_keys [
+    :embedded?,
+    :graph?,
     :map_to,
     :name,
-    :graph?,
     :related_type,
     :type
   ]
@@ -49,6 +50,7 @@ defmodule Resourceful.Type.Relationship do
     graph = type == :one && Keyword.get(opts, :graph?, true)
 
     %Relationship{
+      embedded?: Keyword.get(opts, :embedded?, false),
       graph?: graph,
       name: Type.validate_name!(name),
       map_to: Type.validate_map_to!(map_to),

@@ -108,12 +108,14 @@ defmodule Resourceful.Registry do
       new_field_graph = maybe_put_field_data(new_field_graph, field_data, depth)
 
       case field do
-        %Relationship{graph?: true} ->
+        %Relationship{embedded?: embedded?, graph?: true} ->
+          new_depth = if embedded?, do: depth, else: depth - 1
+
           do_build_field_graph(
             new_field_graph,
             types_map,
             Map.fetch!(types_map, field.related_type),
-            depth - 1,
+            new_depth,
             field_data,
             new_name,
             new_map_to
@@ -125,7 +127,11 @@ defmodule Resourceful.Registry do
     end)
   end
 
-  defp maybe_put_field_data(field_graph, %GraphedField{field: %Relationship{}}, 0) do
+  defp maybe_put_field_data(
+         field_graph,
+         %GraphedField{field: %Relationship{embedded?: false}},
+         0
+       ) do
     field_graph
   end
 
