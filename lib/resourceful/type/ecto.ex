@@ -19,11 +19,25 @@ defmodule Resourceful.Type.Ecto do
   """
   @spec attribute(module(), atom(), keyword()) :: %Attribute{}
   def attribute(schema, field_name, opts \\ []) do
+    {type, virtual?} = get_schema_field_type(schema, field_name)
+
+    opts =
+      if virtual?,
+        do: Keyword.merge(opts, filter: false, query: false, sort: false),
+        else: opts
+
     Attribute.new(
       transform_name(field_name, Keyword.get(opts, :transform_names)),
-      schema.__schema__(:type, field_name),
+      type,
       Keyword.put(opts, :map_to, field_name)
     )
+  end
+
+  defp get_schema_field_type(schema, field_name) do
+    cond do
+      type = schema.__schema__(:type, field_name) -> {type, false}
+      type = schema.__schema__(:virtual_type, field_name) -> {type, true}
+    end
   end
 
   @doc """
@@ -79,7 +93,10 @@ defmodule Resourceful.Type.Ecto do
   end
 
   defp type_opts(schema, opts) do
-    fields = Util.except_or_only!(opts, schema.__schema__(:fields))
+    real_and_virtual_field_names =
+      schema.__schema__(:fields) ++ schema.__schema__(:virtual_fields)
+
+    fields = Util.except_or_only!(opts, real_and_virtual_field_names)
     opts = expand_all_opts(fields, opts)
 
     Keyword.merge(opts,
