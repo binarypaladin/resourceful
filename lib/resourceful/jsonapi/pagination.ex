@@ -7,10 +7,10 @@ defmodule Resourceful.JSONAPI.Pagination do
   import Ecto.Changeset
 
   @default_strategy :resourceful
-                    |> Application.get_env(:jsonapi, [])
+                    |> Application.compile_env(:jsonapi, [])
                     |> Keyword.get(:pagination_strategy, :number_size)
 
-  @default_max_page_size Application.get_env(:resourceful, :max_page_size, 100)
+  @default_max_page_size Application.compile_env(:resourceful, :max_page_size, 100)
 
   @number_size %{
     size_field: :size,

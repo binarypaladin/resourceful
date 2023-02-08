@@ -163,7 +163,7 @@ defmodule Resourceful.Error do
   }
 
   @error_type_defaults Enum.into(
-                         Application.get_env(:resourceful, :error_type_defaults) || %{},
+                         Application.compile_env(:resourceful, :error_type_defaults) || %{},
                          @builtins
                        )
 

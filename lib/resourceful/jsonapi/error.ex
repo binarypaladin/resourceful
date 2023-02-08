@@ -31,7 +31,7 @@ defmodule Resourceful.JSONAPI.Error do
 
   @default_source_type "pointer"
 
-  @error_type_defaults Application.get_env(:resourceful, :error_type_defaults)
+  @error_type_defaults Application.compile_env(:resourceful, :error_type_defaults)
 
   @reserved_names ~w[
     code
