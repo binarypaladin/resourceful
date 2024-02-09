@@ -152,8 +152,8 @@ defmodule Resourceful.Type.Ecto.Query do
     end)
   end
 
-  defp maybe_join(queryable, %{query_alias: join_as} = graphed_field) do
-    case has_named_binding?(queryable, join_as) do
+  defp maybe_join(queryable, %{query_alias: {alias_name, _} = join_as} = graphed_field) do
+    case has_named_binding?(queryable, alias_name) do
       true -> queryable
       _ -> named_join(queryable, graphed_field, join_as)
     end
