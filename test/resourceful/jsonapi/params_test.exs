@@ -23,11 +23,11 @@ defmodule Resourceful.JSONAPI.ParamsTest do
     title = Type.fetch_field!(type, "title")
 
     assert [
-             fields: %{"albums" => ["releaseDate", "title"]},
-             filter: [{release_date, "lt", ~D[2001-01-01]}],
+             sort: [desc: release_date, asc: title],
              include: [artist],
-             page: [number: 2, size: 4],
-             sort: [desc: release_date, asc: title]
+             filter: [{release_date, "lt", ~D[2001-01-01]}],
+             fields: %{"albums" => ["releaseDate", "title"]},
+             page: [size: 4, number: 2]
            ] == opts
 
     assert {:ok, [fields: %{"albums" => ["releaseDate"]}]} ==
@@ -46,10 +46,10 @@ defmodule Resourceful.JSONAPI.ParamsTest do
 
     assert {:error,
             [
-              error: {:invalid_jsonapi_parameter, %{input: "albums", source: ["fields"]}},
+              error: {:invalid_jsonapi_parameter, %{input: %{}, source: ["sort"]}},
               error: {:invalid_jsonapi_parameter, %{input: "releaseDate", source: ["filter"]}},
-              error: {:invalid_jsonapi_parameter, %{input: "2", source: ["page"]}},
-              error: {:invalid_jsonapi_parameter, %{input: %{}, source: ["sort"]}}
+              error: {:invalid_jsonapi_parameter, %{input: "albums", source: ["fields"]}},
+              error: {:invalid_jsonapi_parameter, %{input: "2", source: ["page"]}}
             ]} == Params.validate(type, params)
   end
 
@@ -67,12 +67,20 @@ defmodule Resourceful.JSONAPI.ParamsTest do
     assert {:error,
             [
               error:
-                {:invalid_field,
+                {:attribute_not_found,
                  %{
-                   input: "titl",
+                   input: "-releaseDate,titl",
                    key: "titl",
                    resource_type: "albums",
-                   source: ["fields", "albums", 1]
+                   source: ["sort"]
+                 }},
+              error:
+                {:cannot_include_relationship,
+                 %{
+                   input: "songs",
+                   key: "songs",
+                   resource_type: "albums",
+                   source: ["include"]
                  }},
               error:
                 {:type_cast_failure,
@@ -83,22 +91,14 @@ defmodule Resourceful.JSONAPI.ParamsTest do
                    type: :date
                  }},
               error:
-                {:cannot_include_relationship,
+                {:invalid_field,
                  %{
-                   input: "songs",
-                   key: "songs",
-                   resource_type: "albums",
-                   source: ["include"]
-                 }},
-              error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}},
-              error:
-                {:attribute_not_found,
-                 %{
-                   input: "-releaseDate,titl",
+                   input: "titl",
                    key: "titl",
                    resource_type: "albums",
-                   source: ["sort"]
-                 }}
+                   source: ["fields", "albums", 1]
+                 }},
+              error: {:type_cast_failure, %{input: nil, source: [:page, :size], type: :integer}}
             ]} == Params.validate(type, params)
   end
 end

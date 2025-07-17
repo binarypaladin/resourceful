@@ -10,9 +10,9 @@ defmodule Resourceful.UtilTest do
 
     assert Util.except_or_only!([only: [:north, :south]], set) == [:north, :south]
 
-    assert Util.except_or_only!([except: [:north, :south]], set) == [:east, :west]
+    assert Util.except_or_only!([except: [:north, :south]], set) == [:west, :east]
 
-    assert_raise ArgumentError, ~r/down, up/, fn ->
+    assert_raise ArgumentError, ~r/up, down/, fn ->
       Util.except_or_only!([except: [:up, :down]], set)
     end
   end

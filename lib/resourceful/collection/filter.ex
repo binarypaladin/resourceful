@@ -8,7 +8,7 @@ defmodule Resourceful.Collection.Filter do
 
   Filtering is not meant to replace and be anything even resembling feature
   complete with more robust querying options provided by various databases. As
-  The focus is on edge-facing APIs, generally web-based APIs, filthering is
+  The focus is on edge-facing APIs, generally web-based APIs, filtering is
   meant to be much simpler and more predictable. For instance, wildcard and
   regular expression filtering are omitted specifically by default. This is
   intentional.
@@ -22,6 +22,7 @@ defmodule Resourceful.Collection.Filter do
   @type coercible() :: t() | {String.t(), any()} | list()
 
   @shorthand %{
+    "contains" => %{func: :contains, only: [:string]},
     "eq" => %{func: :equal},
     "ex" => %{func: :exclude, only: [:string, :list]},
     "gt" => %{func: :greater_than},
@@ -55,13 +56,13 @@ defmodule Resourceful.Collection.Filter do
   def call(data_source, filters), do: call(data_source, [filters])
 
   @doc """
-  Converts an argument into an appropriate filter parameter. A castd filter
+  Converts an argument into an appropriate filter parameter. A casted filter
   is a tuple of containing an atom for the field name, an atom of the function
-  name that will be called by the deligated module, and the value that will
+  name that will be called by the delegated module, and the value that will
   be used for comparison.
 
-  Filter parameters can be provded as a tuple, list, or string and will be
-  castd to the appropriate format. Invalid operators and their respective
+  Filter parameters can be provided as a tuple, list, or string and will be
+  casted to the appropriate format. Invalid operators and their respective
   values will result in an exception. Please see `valid_operator?/2` if you want
   to ensure client provided data is valid first.
 
