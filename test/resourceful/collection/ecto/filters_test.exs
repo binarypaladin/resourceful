@@ -3,6 +3,12 @@ defmodule Resourceful.Collection.Ecto.FiltersTest do
 
   alias Resourceful.Collection.Ecto.Filters
 
+  test "contains" do
+    assert Fixtures.albums_with_artist()
+           |> Filters.contains({:artist, :name}, "bowi")
+           |> ids() == [1, 4, 7, 11, 13, 15]
+  end
+
   test "equals" do
     assert Fixtures.albums_with_artist()
            |> Filters.equal({:artist, :name}, "Queen")

@@ -1,6 +1,8 @@
 defmodule Resourceful.Collection.List.Filters do
   alias Resourceful.Collection.List.Sort
 
+  def contains(list, k, v), do: filter(list, k, &Regex.match?(~r/#{v}/i, &1))
+
   def equal(list, k, v), do: filter(list, k, &eq(&1, v))
 
   def exclude(list, k, v), do: filter(list, k, &(!Enum.member?(v, &1)))

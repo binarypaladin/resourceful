@@ -6,6 +6,12 @@ defmodule Resourceful.Collection.List.FiltersTest do
 
   import Resourceful.Test.Helpers
 
+  test "contains" do
+    assert Fixtures.albums()
+           |> Filters.contains(["artist", "name"], "bowi")
+           |> ids() == [1, 4, 7, 11, 13, 15]
+  end
+
   test "equals" do
     assert Fixtures.albums()
            |> Filters.equal(["artist", "name"], "Queen")

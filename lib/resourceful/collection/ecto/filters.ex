@@ -11,6 +11,18 @@ defmodule Resourceful.Collection.Ecto.Filters do
 
   import Ecto.Query, warn: false
 
+  def contains(queryable, {alias_name, col}, val) when is_binary(val) do
+    where(
+      queryable,
+      [_, {^alias_name, q}],
+      ilike(field(q, ^col), ^"%#{String.replace(val, "%", "\\%")}%")
+    )
+  end
+
+  def contains(queryable, col, val) when is_binary(val) do
+    where(queryable, [q], like(field(q, ^col), ^"%#{String.replace(val, "%", "\\%")}%"))
+  end
+
   def equal(queryable, {alias_name, col}, nil) do
     where(queryable, [_, {^alias_name, q}], is_nil(field(q, ^col)))
   end
